@@ -136,11 +136,11 @@ export function validateSystem(data: Types.System): Types.System {
 			throw new Types.ValidationError(`Invalid disk size at index ${index}`)
 		}
 
-		if (!disk.model || typeof disk.model !== "string") {
+		if (typeof disk.model !== "string") {
 			throw new Types.ValidationError(`Invalid disk model at index ${index}`)
 		}
 
-		if (!disk.serial || typeof disk.serial !== "string") {
+		if (typeof disk.serial !== "string") {
 			throw new Types.ValidationError(`Invalid disk serial at index ${index}`)
 		}
 
@@ -182,7 +182,7 @@ export function validateSystem(data: Types.System): Types.System {
 	})
 
 	return {
-		id: "",
+		id: data.id,
 		disks: disks,
 		interfaces: interfaces,
 	}

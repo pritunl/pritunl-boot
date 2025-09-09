@@ -33,6 +33,13 @@ export default {
 					if (match && match[1]) {
 						return postSystem(request, env, match[1])
 					}
+				} else if (url.pathname.endsWith("/system") &&
+					request.method == "GET") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/system$/)
+					if (match && match[1]) {
+						return getSystem(request, env, match[1])
+					}
 				} else if (url.pathname.endsWith("/data") &&
 					request.method == "GET") {
 
@@ -133,6 +140,24 @@ async function getKs(_request: Request, env: Types.Env,
 	return new Response(
 		ksConfig,
 		{headers: {"Content-Type": "text/plain"},
+	})
+}
+
+async function getSystem(_request: Request, env: Types.Env,
+	id: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const data = await db.get("system") as Types.System
+	if (!data) {
+		return Response.json({
+			ready: false,
+		})
+	}
+
+	return Response.json({
+		...data,
+		ready: true,
 	})
 }
 
