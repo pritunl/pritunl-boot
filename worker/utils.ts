@@ -53,7 +53,7 @@ export function cidrToIp(cidr: string): string {
 	return cidr.split('/')[0]
 }
 
-export function generateIpxe(data: Types.Payload): string {
+export function generateIpxe(data: Types.Register): string {
 	return `#!ipxe
 kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=http://boot.pritunl.com/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}
 initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img
@@ -61,7 +61,7 @@ boot
 `
 }
 
-function getKernelNetwork(data: Types.Payload): string {
+function getKernelNetwork(data: Types.Register): string {
 	const publicIp = cidrToIp(data.public_ip)
 	const netmask = cidrToNetmask(data.public_ip)
 	let iface = data.interface || data.interface1
@@ -72,7 +72,7 @@ function getKernelNetwork(data: Types.Payload): string {
 	return `ip=${publicIp}::${data.gateway_ip}:${netmask}::${iface}:off:8.8.8.8`
 }
 
-export function generateKickstart(data: Types.Payload): string {
+export function generateKickstart(data: Types.Register): string {
 	const sshKeys = decodeBase64(data.ssh_keys)
 	const publicIp = cidrToIp(data.public_ip)
 

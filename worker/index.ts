@@ -9,7 +9,7 @@ export default {
 
 		switch (url.pathname) {
 			case "/register":
-				return register(request, env)
+				return postRegister(request, env)
 			default:
 				if (url.pathname.endsWith(".ipxe")) {
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\.ipxe$/)
@@ -21,6 +21,11 @@ export default {
 					if (match && match[1]) {
 						return getKs(request, env, match[1])
 					}
+				} else if (url.pathname.endsWith("/system")) {
+						const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/system$/)
+						if (match && match[1]) {
+								return postSystem(request, env, match[1])
+						}
 				}
 
 				return new Response(null, {status: 404})
@@ -28,9 +33,11 @@ export default {
 	},
 } satisfies ExportedHandler<Types.Env>
 
-async function register(request: Request, env: Types.Env): Promise<Response> {
-	let payload = await request.json() as Types.Payload
-	let data: Types.Payload
+async function postRegister(request: Request,
+	env: Types.Env): Promise<Response> {
+
+	let payload = await request.json() as Types.Register
+	let data: Types.Register
 
 	try {
 		data = Validation.validatePayload(payload)
@@ -61,7 +68,7 @@ async function getIpxe(_request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
 	const db = env.BOOT.getByName(id)
-	const data = await db.get("data") as Types.Payload
+	const data = await db.get("data") as Types.Register
 
 	if (!data) {
 		return new Response(null, {status: 404})
@@ -78,7 +85,7 @@ async function getKs(_request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
 	const db = env.BOOT.getByName(id)
-	const data = await db.get("data") as Types.Payload
+	const data = await db.get("data") as Types.Register
 
 	if (!data) {
 		return new Response(null, {status: 404})

@@ -1,7 +1,7 @@
 import * as Types from "./types"
 import * as Utils from "./utils"
 
-export function validatePayload(data: Types.Payload): Types.Payload {
+export function validatePayload(data: Types.Register): Types.Register {
 	if (!data.network_mode || !["static", "dhcp"].includes(data.network_mode)) {
 		throw new Types.ValidationError("Invalid network_mode")
 	}

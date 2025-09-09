@@ -4,7 +4,7 @@ export interface Env {
 	BOOT: DurableObjectNamespace<Database.Boot>
 }
 
-export interface Payload {
+export interface Register {
 	id: string
 	network_mode: "static" | "dhcp"
 	bonded_network: boolean
