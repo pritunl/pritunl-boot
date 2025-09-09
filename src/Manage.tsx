@@ -77,6 +77,7 @@ function Manage() {
 
 	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
 	const [raidConfig, setRaidConfig] = useState("-1")
+	const [selectedIfaces, setSelectedIfaces] = useState<string[]>([]);
 
 	let baseUrl: string
 	baseUrl = "https://boot.pritunl.com"
@@ -144,6 +145,21 @@ function Manage() {
 		)
 	})
 
+	let ifaceElms: React.ReactNode[] = []
+	system?.interfaces?.forEach((iface: Interface) => {
+		ifaceElms.push(
+			<CheckboxCards.Item
+				value={iface.mac}
+			>
+				<Flex direction="column" width="100%">
+					<Text weight="bold">{iface.mac}</Text>
+					<Text>{iface.model}</Text>
+					<Text>{iface.ip || "-"}</Text>
+				</Flex>
+			</CheckboxCards.Item>
+		)
+	})
+
 	return (
 		<Box>
 			<Container align="center" maxWidth="480px">
@@ -166,10 +182,11 @@ function Manage() {
 
 					{system && (<>
 						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="ipxe-url">
+							<Text as="label" htmlFor="install-disks">
 								Select Install Disks
 							</Text>
 							<CheckboxCards.Root
+								id="install-disks"
 								defaultValue={[]}
 								columns="1"
 								size="1"
@@ -197,6 +214,24 @@ function Manage() {
 									<Select.Item value="10">RAID 10</Select.Item>
 								</Select.Content>
 							</Select.Root>
+						</Flex>
+
+						<Flex direction="column" gap="1">
+							<Text as="label" htmlFor="install-ifaces">
+								Select Network Interfaces
+							</Text>
+							<CheckboxCards.Root
+								id="install-ifaces"
+								defaultValue={[]}
+								columns="1"
+								size="1"
+								value={selectedIfaces}
+								onValueChange={(selected: string[]) => {
+									setSelectedIfaces(selected)
+								}}
+							>
+								{ifaceElms}
+							</CheckboxCards.Root>
 						</Flex>
 					</>)}
 
