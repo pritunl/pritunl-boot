@@ -69,7 +69,8 @@ async function postRegister(request: Request,
 		data.id = Utils.generateId(10)
 	}
 
-	const db = env.BOOT.getByName(data.id)
+	const objId = env.BOOT.idFromName(data.id)
+	const db = env.BOOT.get(objId)
 	await db.ttl()
 	await db.set("data", data)
 
@@ -81,9 +82,9 @@ async function postRegister(request: Request,
 async function getData(_request: Request,
 	env: Types.Env, id: string): Promise<Response> {
 
-	const db = env.BOOT.getByName(id)
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
 	const data = await db.get("data") as Types.Register
-
 	if (!data) {
 		return new Response(null, {status: 404})
 	}
@@ -98,9 +99,9 @@ async function getData(_request: Request,
 async function getIpxe(_request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
-	const db = env.BOOT.getByName(id)
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
 	const data = await db.get("data") as Types.Register
-
 	if (!data) {
 		return new Response(null, {status: 404})
 	}
@@ -115,7 +116,8 @@ async function getIpxe(_request: Request, env: Types.Env,
 async function getKs(_request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
-	const db = env.BOOT.getByName(id)
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
 	const data = await db.get("data") as Types.Register
 	if (!data) {
 		return new Response(null, {status: 404})
@@ -199,7 +201,8 @@ async function postSystem(request: Request, env: Types.Env,
 		}
 	}
 
-	const db = env.BOOT.getByName(id)
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
 	const register = await db.get("data") as Types.Register
 	if (!register) {
 		return new Response(null, {status: 404})
