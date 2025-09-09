@@ -6,6 +6,8 @@ export interface Env {
 
 export interface Register {
 	id: string
+	mode: "live" | "static"
+	provider: "none" | "latitude"
 	network_mode: "static" | "dhcp"
 	bonded_network: boolean
 	public_ip: string
@@ -21,6 +23,25 @@ export interface Register {
 	raid: number
 	ssh_keys: string
 	long_url_key: boolean
+}
+
+export interface System {
+	id: string
+	disks: Disk[]
+	interfaces: Interface[]
+}
+
+export interface Disk {
+	path: string
+	size: number
+	model: string
+	serial: string
+}
+
+export interface Interface {
+	mac: string
+	ip: string
+	model: string
 }
 
 export class ValidationError extends Error {

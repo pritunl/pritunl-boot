@@ -1,16 +1,33 @@
 import * as Types from "./types"
 import * as Utils from "./utils"
 
-export function validatePayload(data: Types.Register): Types.Register {
+export function validateRegister(data: Types.Register): Types.Register {
+	if (!data.mode || !["live", "static"].includes(data.mode)) {
+		throw new Types.ValidationError("Invalid mode")
+	}
+
+	if (!data.provider || !["none", "latitude"].includes(data.provider)) {
+		throw new Types.ValidationError("Invalid provider")
+	}
+
 	if (!data.network_mode || !["static", "dhcp"].includes(data.network_mode)) {
 		throw new Types.ValidationError("Invalid network_mode")
 	}
 
-	if (data.network_mode === "static") {
-		if (typeof data.bonded_network !== "boolean") {
-			throw new Types.ValidationError("Invalid bonded_network format")
-		}
+	if (typeof data.bonded_network !== "boolean") {
+		throw new Types.ValidationError("Invalid bonded_network format")
+	}
+	if (data.interface && !isValidInterfaceName(data.interface)) {
+		throw new Types.ValidationError("Invalid interface name format")
+	}
+	if (data.interface1 && !isValidInterfaceName(data.interface1)) {
+		throw new Types.ValidationError("Invalid interface1 name format")
+	}
+	if (data.interface2 && !isValidInterfaceName(data.interface2)) {
+		throw new Types.ValidationError("Invalid interface2 name format")
+	}
 
+	if (data.network_mode === "static") {
 		if (data.public_ip && !isValidIPv4CIDR(data.public_ip)) {
 			throw new Types.ValidationError("Invalid public_ip format")
 		}
@@ -31,27 +48,22 @@ export function validatePayload(data: Types.Register): Types.Register {
 		if (data.vlan6 && !isValidVLAN(data.vlan6)) {
 			throw new Types.ValidationError("Invalid VLAN ID for IPv6")
 		}
-
-		if (data.interface && !isValidInterfaceName(data.interface)) {
-			throw new Types.ValidationError("Invalid interface name format")
-		}
-		if (data.interface1 && !isValidInterfaceName(data.interface1)) {
-			throw new Types.ValidationError("Invalid interface1 name format")
-		}
-		if (data.interface2 && !isValidInterfaceName(data.interface2)) {
-			throw new Types.ValidationError("Invalid interface2 name format")
-		}
 	} else {
-		data.bonded_network = false
 		data.public_ip = ""
 		data.gateway_ip = ""
 		data.public_ip6 = ""
 		data.gateway_ip6 = ""
 		data.vlan = 0
 		data.vlan6 = 0
-		data.interface = ""
+	}
+
+	if (data.mode === "live") {
+		data.bonded_network = false
 		data.interface1 = ""
 		data.interface2 = ""
+		data.public_ip6 = ""
+		data.gateway_ip6 = ""
+		data.vlan6 = 0
 	}
 
 	if (data.raid && ![-1, 1, 10].includes(data.raid)) {
@@ -81,6 +93,8 @@ export function validatePayload(data: Types.Register): Types.Register {
 
 	return {
 		id: "",
+		mode: data.mode,
+		provider: data.provider,
 		network_mode: data.network_mode,
 		bonded_network: data.bonded_network,
 		public_ip: data.public_ip,
@@ -96,6 +110,81 @@ export function validatePayload(data: Types.Register): Types.Register {
 		raid: data.raid,
 		ssh_keys: data.ssh_keys,
 		long_url_key: data.long_url_key,
+	}
+}
+
+export function validateSystem(data: Types.System): Types.System {
+	if (!data.disks || !Array.isArray(data.disks)) {
+		throw new Types.ValidationError("Invalid disks format")
+	}
+
+	if (data.disks.length === 0) {
+		throw new Types.ValidationError("At least one disk is required")
+	}
+
+	let disks: Types.Disk[] = []
+	data.disks.slice(0, 32).forEach((disk, index) => {
+		if (!disk.path || typeof disk.path !== "string") {
+			throw new Types.ValidationError(`Invalid disk path at index ${index}`)
+		}
+
+		if (!disk.path.startsWith("/dev/")) {
+			throw new Types.ValidationError(`Disk path must start with /dev/ at index ${index}`)
+		}
+
+		if (typeof disk.size !== "number" || disk.size <= 0) {
+			throw new Types.ValidationError(`Invalid disk size at index ${index}`)
+		}
+
+		if (!disk.model || typeof disk.model !== "string") {
+			throw new Types.ValidationError(`Invalid disk model at index ${index}`)
+		}
+
+		if (!disk.serial || typeof disk.serial !== "string") {
+			throw new Types.ValidationError(`Invalid disk serial at index ${index}`)
+		}
+
+		disks.push({
+			path: Utils.filterString(disk.path).substring(0, 128),
+			size: disk.size,
+			model: Utils.filterString(disk.model).substring(0, 128),
+			serial: Utils.filterString(disk.serial).substring(0, 128),
+		})
+	})
+
+	if (!data.interfaces || !Array.isArray(data.interfaces)) {
+		throw new Types.ValidationError("Invalid interfaces format")
+	}
+
+	if (data.interfaces.length === 0) {
+		throw new Types.ValidationError("At least one interface is required")
+	}
+
+	let interfaces: Types.Interface[] = []
+	data.interfaces.slice(0, 32).forEach((iface, index) => {
+		if (!iface.mac || !isValidMAC(iface.mac)) {
+			throw new Types.ValidationError(`Invalid MAC address at index ${index}`)
+		}
+
+		if (iface.ip && !isValidIPv4(iface.ip)) {
+			throw new Types.ValidationError(`Invalid IP address at index ${index}`)
+		}
+
+		if (!iface.model || typeof iface.model !== "string") {
+			throw new Types.ValidationError(`Invalid interface model at index ${index}`)
+		}
+
+		interfaces.push({
+			mac: iface.mac,
+			ip: iface.ip,
+			model: Utils.filterString(iface.model).substring(0, 128),
+		})
+	})
+
+	return {
+		id: "",
+		disks: disks,
+		interfaces: interfaces,
 	}
 }
 
@@ -145,4 +234,9 @@ export function isValidInterfaceName(name: string): boolean {
 	}
 	const validCharsRegex = /^[a-z0-9]+$/
 	return validCharsRegex.test(name)
+}
+
+export function isValidMAC(mac: string): boolean {
+	const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/
+	return macRegex.test(mac)
 }
