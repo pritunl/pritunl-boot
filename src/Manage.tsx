@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react"
+import * as React from "react"
 import logo from "./assets/logo.png"
 import * as Router from "./router"
+import * as Utils from "./utils"
 import {
 	Box, Container,
 	Heading, Flex,
 	Text, TextArea,
 	Button, TextField,
+	Select, CheckboxCards,
 	AlertDialog,
 } from "@radix-ui/themes"
+
+export interface Error {
+	error: string
+}
 
 export interface Data {
 	id: string
@@ -32,43 +39,119 @@ export interface Data {
 	error: string
 }
 
+export interface System {
+	id: string
+	disks: Disk[]
+	interfaces: Interface[]
+	ready: boolean
+	error: string
+}
+
+export interface Disk {
+	path: string
+	size: number
+	model: string
+	serial: string
+}
+
+export interface Interface {
+	mac: string
+	ip: string
+	model: string
+}
+
+var curSync: Utils.SyncInterval
+
 function Manage() {
 	const { params } = Router.useRouter()
 	const bootId = params.bootId
+	if (!bootId) {
+		return
+	}
 
-	const [_disabled, _setDisabled] = useState(false)
-	const [errorMsg, setErrorMsg] = useState("")
-	const [ipxeConf, setIpxeConf] = useState("")
-	const [_data, setData] = useState({} as Data)
+	const [_disabled, _setDisabled] = useState<boolean>(false)
+	const [errorMsg, setErrorMsg] = useState<string>("")
+	const [ipxeConf, setIpxeConf] = useState<string>("")
+	const [_data, setData] = useState<Data>()
+	const [system, setSystem] = useState<System>()
+
+	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
+	const [raidConfig, setRaidConfig] = useState("-1")
 
 	let baseUrl: string
 	baseUrl = "https://boot.pritunl.com"
 
 	useEffect(() => {
 		fetch(`/${bootId}/data`)
-			.then(async (res) => {
-				const data = await res.json() as Data
-				if (!res.ok) {
-					setErrorMsg(data.error || "Unknown error")
+			.then(async (resp) => {
+				if (!resp.ok) {
+					if (resp.status === 400) {
+						const errorData = await resp.json() as Error
+						setErrorMsg(errorData.error || "Unknown error")
+					}
+					try {
+						const respText = await resp.text()
+						setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+					} catch {
+						setErrorMsg(`Unknown error: ${resp.status}`)
+					}
 				} else {
-					setData(data)
-					setIpxeConf(data.ipxe)
+					const bootData = await resp.json() as Data
+					setData(bootData)
+					setIpxeConf(bootData.ipxe)
 				}
 			})
 			.catch((error) => {
-				setIpxeConf(`Error: ${error}`)
+				setErrorMsg(`Unknown error: ${error}`)
 			})
+
+		curSync?.stop()
+		curSync = new Utils.SyncInterval(async () => {
+			let resp = await fetch(`/${bootId}/system`)
+			if (!resp.ok) {
+				if (resp.status === 400) {
+					const errorData = await resp.json() as Error
+					setErrorMsg(errorData.error || "Unknown error")
+				}
+				try {
+					const respText = await resp.text()
+					setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+				} catch {
+					setErrorMsg(`Unknown error: ${resp.status}`)
+				}
+			} else {
+				const systemData = await resp.json() as System
+				if (systemData.ready) {
+					curSync.stop()
+					setSystem(systemData)
+				}
+			}
+		}, 1000)
 	}, [bootId])
+
+	let diskElms: React.ReactNode[] = []
+	system?.disks?.forEach((disk: Disk) => {
+		diskElms.push(
+			<CheckboxCards.Item
+				value={disk.path}
+			>
+				<Flex direction="column" width="100%">
+					<Text weight="bold">{disk.path}</Text>
+					<Text>{disk.model}{disk.serial ? (" " + disk.serial) : ""}</Text>
+					<Text>{Math.round(disk.size / 1024)}GB</Text>
+				</Flex>
+			</CheckboxCards.Item>
+		)
+	})
 
 	return (
 		<Box>
-			<Container align="center" size="1">
+			<Container align="center" maxWidth="480px">
 				<Flex
 					direction="column"
 					gap="3"
-					maxWidth="400px"
 					style={{
-						margin: "30px 0 30px 0",
+						margin: "30px 22px",
 					}}
 				>
 					<img
@@ -80,6 +163,42 @@ function Manage() {
 						}}
 					/>
 					<Heading>Linux Boot Generator</Heading>
+
+					{system && (<>
+						<Flex direction="column" gap="1">
+							<Text as="label" htmlFor="ipxe-url">
+								Select Install Disks
+							</Text>
+							<CheckboxCards.Root
+								defaultValue={[]}
+								columns="1"
+								size="1"
+								value={selectedDisks}
+								onValueChange={(selected: string[]) => {
+									setSelectedDisks(selected)
+								}}
+							>
+								{diskElms}
+							</CheckboxCards.Root>
+						</Flex>
+
+						<Flex direction="column" gap="1">
+							<Text as="label" htmlFor="raid-config">
+								RAID Configuration
+							</Text>
+							<Select.Root
+								value={raidConfig}
+								onValueChange={setRaidConfig}
+							>
+								<Select.Trigger id="raid-config"/>
+								<Select.Content>
+									<Select.Item value="-1">No RAID</Select.Item>
+									<Select.Item value="1">RAID 1</Select.Item>
+									<Select.Item value="10">RAID 10</Select.Item>
+								</Select.Content>
+							</Select.Root>
+						</Flex>
+					</>)}
 
 					<Flex direction="column" gap="1">
 						<Text as="label" htmlFor="ipxe-url">

@@ -32,13 +32,12 @@ function Register() {
 
 	return (
 		<Box>
-			<Container align="center" size="1">
+			<Container align="center" maxWidth="480px">
 				<Flex
 					direction="column"
 					gap="3"
-					maxWidth="400px"
 					style={{
-						margin: "30px 0 30px 0",
+						margin: "30px 22px",
 					}}
 				>
 					<img
@@ -311,20 +310,30 @@ function Register() {
 									"Content-Type": "application/json",
 								},
 								body: JSON.stringify(payload),
-							}).then(async (res) => {
-								const data = await res.json() as {
-									id?: string
-									error?: string
-								}
-								if (!res.ok) {
-									setErrorMsg(data.error || "Unknown error")
+							}).then(async (resp) => {
+								setDisabled(false)
+								if (!resp.ok) {
+									if (resp.status === 400) {
+										const errorData = await resp.json() as {
+											error: string
+										}
+										setErrorMsg(errorData.error || "Unknown error")
+									}
+									try {
+										const respText = await resp.text()
+										setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+									} catch {
+										setErrorMsg(`Unknown error: ${resp.status}`)
+									}
 								} else {
+									const data = await resp.json() as {
+										id?: string
+									}
 									navigate(`/${data.id}/manage`)
 								}
-								setDisabled(false)
 							}).catch((error) => {
-								setErrorMsg(`Unknown error: ${error}`)
 								setDisabled(false)
+								setErrorMsg(`Unknown error: ${error}`)
 							})
 						}}
 					>Generate</Button>
