@@ -37,6 +37,144 @@ function getKernelNetwork(data: Types.Configuration): string {
 	return `ip=${publicIp}::${data.gateway_ip}:${netmask}::${iface}:off:8.8.8.8`
 }
 
+export function generateKickstartNetwork(data: Types.Configuration): string {
+	let conf = ``
+	let rootIface = ""
+
+	if (data.bonded_network && data.interfaces && data.interfaces.length >= 2) {
+		rootIface = "bond0"
+		conf += `
+nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4`
+		data.interfaces.forEach((iface: string, index: number) => {
+			conf += `
+nmcli connection add type bond-slave con-name bond0-slave${index} ifname ${iface} master bond0`
+		})
+	} else {
+		if (data.interfaces) {
+			rootIface = data.interfaces[0]
+		} else {
+			rootIface = `"\\$INTERFACE"`
+		}
+
+		conf += `
+nmcli connection add type ethernet con-name ${rootIface} ifname ${rootIface} connection.autoconnect yes`
+
+		if (data.mtu) {
+			conf += `
+nmcli connection modify ${rootIface} 802-3-ethernet.mtu ${data.mtu}`
+		}
+	}
+
+	if (data.vlan && data.vlan6) {
+		conf += `
+nmcli connection modify ${rootIface} ipv4.method disabled ipv6.method ignore`
+	} else {
+		if (!data.vlan) {
+			if (data.network_mode === "static") {
+				conf += `
+nmcli connection modify ${rootIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.gateway ${data.gateway_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+			} else {
+				conf += `
+nmcli connection modify ${rootIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+			}
+		} else {
+			conf += `
+nmcli connection modify ${rootIface} ipv4.method disabled`
+		}
+
+		if (!data.vlan6) {
+			if (data.network_mode === "static" && data.public_ip6) {
+				conf += `
+nmcli connection modify ${rootIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
+				if (data.gateway_ip6) {
+					conf += `
+	nmcli connection modify ${rootIface} ipv6.gateway ${data.gateway_ip6}`
+				}
+			} else {
+				conf += `
+nmcli connection modify ${rootIface} ipv6.method auto`
+			}
+		} else {
+			conf += `
+nmcli connection modify ${rootIface} ipv6.method ignore`
+		}
+	}
+
+	conf += `
+nmcli connection up ${rootIface}
+sleep 1
+`
+
+	if (data.vlan) {
+		let vlanIface = `${rootIface}.${data.vlan}`
+		conf += `
+nmcli connection add type vlan con-name ${vlanIface} ifname ${vlanIface} dev ${rootIface} id ${data.vlan} connection.autoconnect yes`
+
+		if (data.mtu) {
+			conf += `
+nmcli connection modify ${vlanIface} 802-3-ethernet.mtu ${data.mtu}`
+		}
+
+		if (data.network_mode === "static") {
+			conf += `
+nmcli connection modify ${vlanIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.gateway ${data.gateway_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+		} else {
+			conf += `
+nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+		}
+
+		if (data.vlan === data.vlan6) {
+			if (data.network_mode === "static" && data.public_ip6) {
+				conf += `
+nmcli connection modify ${vlanIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
+				if (data.gateway_ip6) {
+					conf += `
+	nmcli connection modify ${vlanIface} ipv6.gateway ${data.gateway_ip6}`
+				}
+			} else {
+				conf += `
+nmcli connection modify ${vlanIface} ipv6.method auto`
+			}
+		} else {
+			conf += `
+nmcli connection modify ${vlanIface} ipv6.method ignore`
+		}
+
+		conf += `
+nmcli connection up ${vlanIface}
+`
+	}
+
+	if (data.vlan6 && data.vlan6 !== data.vlan) {
+		let vlanIface6 = `${rootIface}.${data.vlan6}`
+		conf += `
+nmcli connection add type vlan con-name ${vlanIface6} ifname ${vlanIface6} dev ${rootIface} id ${data.vlan6} ipv4.method disabled connection.autoconnect yes`
+
+		if (data.mtu) {
+			conf += `
+nmcli connection modify ${vlanIface6} 802-3-ethernet.mtu ${data.mtu}`
+		}
+
+		if (data.network_mode === "static" && data.public_ip6) {
+			conf += `
+nmcli connection modify ${vlanIface6} ipv6.method manual ipv6.addresses ${data.public_ip6}`
+			if (data.gateway_ip6) {
+				conf += `
+nmcli connection modify ${vlanIface6} ipv6.gateway ${data.gateway_ip6}`
+			}
+		} else {
+			conf += `
+nmcli connection modify ${vlanIface6} ipv6.method auto`
+		}
+
+		conf += `
+nmcli connection up ${vlanIface6}
+`
+	}
+
+	return conf
+}
+
 export function generateKickstart(data: Types.Configuration): string {
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	const publicIp = Utils.cidrToIp(data.public_ip)
