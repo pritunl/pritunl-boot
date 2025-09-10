@@ -1,7 +1,7 @@
 import * as Types from "./types"
 import * as Utils from "./utils"
 
-export function generateIpxe(data: Types.Register): string {
+export function generateIpxe(data: Types.Configuration): string {
 	if (data.provider === "latitude") {
 		return `#!ipxe
 ifopen net{{ INTERFACE_ID }}
@@ -26,7 +26,7 @@ initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/in
 boot`
 }
 
-function getKernelNetwork(data: Types.Register): string {
+function getKernelNetwork(data: Types.Configuration): string {
 	const publicIp = Utils.cidrToIp(data.public_ip)
 	const netmask = Utils.cidrToNetmask(data.public_ip)
 	let iface = data.interface || data.interface1
@@ -37,9 +37,25 @@ function getKernelNetwork(data: Types.Register): string {
 	return `ip=${publicIp}::${data.gateway_ip}:${netmask}::${iface}:off:8.8.8.8`
 }
 
-export function generateKickstart(data: Types.Register): string {
+export function generateKickstart(data: Types.Configuration): string {
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	const publicIp = Utils.cidrToIp(data.public_ip)
+
+    let rootSize = ""
+    if (!data.root_size || data.root_size === "") {
+        rootSize = "--size=2"
+    } else {
+        const match = data.root_size.match(/^(\d+)GB$/i)
+        if (match) {
+            let gb = parseInt(match[1])
+            if (gb < 2) {
+                gb = 2
+            }
+            rootSize = `--maxsize=${gb * 1024}`
+        } else {
+            rootSize = "--size=2"
+        }
+    }
 
 	return `text
 reboot
@@ -167,8 +183,8 @@ part biosboot --ondisk=\${DISKS[0]} --size=1 --fstype="biosboot"
 part biosboot --ondisk=\${DISKS[1]} --size=1 --fstype="biosboot"
 part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part raid.21 --ondisk=\${DISKS[0]} --size=1 --grow
-part raid.22 --ondisk=\${DISKS[1]} --size=1 --grow
+part raid.21 --ondisk=\${DISKS[0]} ${rootSize} --grow
+part raid.22 --ondisk=\${DISKS[1]} ${rootSize} --grow
 raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
 raid / --level=1 --device=md1 raid.21 raid.22 --fstype="xfs"
 EOF
@@ -182,10 +198,10 @@ part biosboot --ondisk=\${DISKS[2]} --size=1 --fstype="biosboot"
 part biosboot --ondisk=\${DISKS[3]} --size=1 --fstype="biosboot"
 part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part raid.21 --ondisk=\${DISKS[0]} --size=1 --grow
-part raid.22 --ondisk=\${DISKS[1]} --size=1 --grow
-part raid.23 --ondisk=\${DISKS[2]} --size=1 --grow
-part raid.24 --ondisk=\${DISKS[3]} --size=1 --grow
+part raid.21 --ondisk=\${DISKS[0]} ${rootSize} --grow
+part raid.22 --ondisk=\${DISKS[1]} ${rootSize} --grow
+part raid.23 --ondisk=\${DISKS[2]} ${rootSize} --grow
+part raid.24 --ondisk=\${DISKS[3]} ${rootSize} --grow
 raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
 raid / --level=10 --device=md1 raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
 EOF
@@ -195,7 +211,7 @@ ignoredisk --only-use=\${DISKS[0]}
 clearpart --all --initlabel
 part biosboot --ondisk=\${DISKS[0]} --size=1 --fstype="biosboot"
 part /boot/efi --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part / --fstype="xfs" --ondisk=\${DISKS[0]} --grow
+part / --fstype="xfs" --ondisk=\${DISKS[0]} ${rootSize} --grow
 EOF
 fi
 %end
@@ -352,7 +368,7 @@ systemctl enable chronyd
 `
 }
 
-export function generateKickstartLive(data: Types.Register): string {
+export function generateKickstartLive(data: Types.Configuration): string {
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 
 	return `text

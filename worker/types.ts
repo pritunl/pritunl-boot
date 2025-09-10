@@ -4,7 +4,7 @@ export interface Env {
 	BOOT: DurableObjectNamespace<Database.Boot>
 }
 
-export interface Register {
+export interface Configuration {
 	id: string
 	mode: "live" | "static"
 	provider: "none" | "latitude"
@@ -20,9 +20,11 @@ export interface Register {
 	interface?: string
 	interface1?: string
 	interface2?: string
-	disk_size: string
+	root_size: string
 	raid: number
 	ssh_keys: string
+	disk?: string[]
+	interfaces?: string[]
 	long_url_key: boolean
 }
 

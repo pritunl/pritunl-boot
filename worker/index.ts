@@ -57,11 +57,11 @@ export default {
 async function postRegister(request: Request,
 	env: Types.Env): Promise<Response> {
 
-	let payload = await request.json() as Types.Register
-	let data: Types.Register
+	let payload = await request.json() as Types.Configuration
+	let data: Types.Configuration
 
 	try {
-		data = Validation.validateRegister(payload)
+		data = Validation.validateConfiguration(payload)
 	} catch (error) {
 		if (error instanceof Types.ValidationError) {
 			return Response.json({error: error.message}, {status: 400})
@@ -91,7 +91,7 @@ async function getData(_request: Request,
 
 	const objId = env.BOOT.idFromName(id)
 	const db = env.BOOT.get(objId)
-	const data = await db.get("data") as Types.Register
+	const data = await db.get("data") as Types.Configuration
 	if (!data) {
 		return new Response(null, {status: 404})
 	}
@@ -108,7 +108,7 @@ async function getIpxe(_request: Request, env: Types.Env,
 
 	const objId = env.BOOT.idFromName(id)
 	const db = env.BOOT.get(objId)
-	const data = await db.get("data") as Types.Register
+	const data = await db.get("data") as Types.Configuration
 	if (!data) {
 		return new Response(null, {status: 404})
 	}
@@ -125,7 +125,7 @@ async function getKs(_request: Request, env: Types.Env,
 
 	const objId = env.BOOT.idFromName(id)
 	const db = env.BOOT.get(objId)
-	const data = await db.get("data") as Types.Register
+	const data = await db.get("data") as Types.Configuration
 	if (!data) {
 		return new Response(null, {status: 404})
 	}
@@ -228,7 +228,7 @@ async function postSystem(request: Request, env: Types.Env,
 
 	const objId = env.BOOT.idFromName(id)
 	const db = env.BOOT.get(objId)
-	const register = await db.get("data") as Types.Register
+	const register = await db.get("data") as Types.Configuration
 	if (!register) {
 		return new Response(null, {status: 404})
 	}

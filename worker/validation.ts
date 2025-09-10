@@ -1,7 +1,9 @@
 import * as Types from "./types"
 import * as Utils from "./utils"
 
-export function validateRegister(data: Types.Register): Types.Register {
+export function validateConfiguration(
+	data: Types.Configuration): Types.Configuration {
+
 	if (!data.mode || !["live", "static"].includes(data.mode)) {
 		throw new Types.ValidationError("Invalid mode")
 	}
@@ -25,6 +27,16 @@ export function validateRegister(data: Types.Register): Types.Register {
 	}
 	if (data.interface2 && !isValidInterfaceName(data.interface2)) {
 		throw new Types.ValidationError("Invalid interface2 name format")
+	}
+
+	if (data.interfaces) {
+		data.interfaces.forEach((iface: string) => {
+			if (!isValidInterfaceName(iface)) {
+				throw new Types.ValidationError("Invalid interface name in interfaces")
+			}
+		})
+	} else {
+		data.interfaces = []
 	}
 
 	if (data.network_mode === "static") {
@@ -66,15 +78,25 @@ export function validateRegister(data: Types.Register): Types.Register {
 		data.vlan6 = 0
 	}
 
-	if (data.disk_size && data.disk_size !== "") {
-		data.disk_size = data.disk_size.toUpperCase()
-		const diskSizeRegex = /^\d+GB$/
-		if (!diskSizeRegex.test(data.disk_size)) {
+	if (data.root_size && data.root_size !== "") {
+		data.root_size = data.root_size.toUpperCase()
+		const rootSizeRegex = /^\d+GB$/
+		if (!rootSizeRegex.test(data.root_size)) {
 			throw new Types.ValidationError(
-				"Invalid disk_size format. Must be a number followed " +
+				"Invalid root_size format. Must be a number followed " +
 				"by 'GB' (e.g., '50GB') or blank to fill disk"
 			)
 		}
+	}
+
+	if (data.disk) {
+		data.disk.forEach((diskPath: string) => {
+			if (!isValidDiskPath(diskPath)) {
+				throw new Types.ValidationError("Invalid disk path in targer_disks")
+			}
+		})
+	} else {
+		data.disk = []
 	}
 
 	if (data.raid && ![-1, 1, 10].includes(data.raid)) {
@@ -118,7 +140,7 @@ export function validateRegister(data: Types.Register): Types.Register {
 		interface: data.interface,
 		interface1: data.interface1,
 		interface2: data.interface2,
-		disk_size: data.disk_size,
+		root_size: data.root_size,
 		raid: data.raid,
 		ssh_keys: data.ssh_keys,
 		long_url_key: data.long_url_key,
@@ -140,8 +162,9 @@ export function validateSystem(data: Types.System): Types.System {
 			throw new Types.ValidationError(`Invalid disk path at index ${index}`)
 		}
 
-		if (!disk.path.startsWith("/dev/")) {
-			throw new Types.ValidationError(`Disk path must start with /dev/ at index ${index}`)
+		if (!isValidDiskPath(disk.path)) {
+			throw new Types.ValidationError(
+				`Invalid disk path format at index ${index}`)
 		}
 
 		if (typeof disk.size !== "number" || disk.size <= 0) {
@@ -183,7 +206,8 @@ export function validateSystem(data: Types.System): Types.System {
 		}
 
 		if (!iface.model || typeof iface.model !== "string") {
-			throw new Types.ValidationError(`Invalid interface model at index ${index}`)
+			throw new Types.ValidationError(
+				`Invalid interface model at index ${index}`)
 		}
 
 		interfaces.push({
@@ -251,4 +275,9 @@ export function isValidInterfaceName(name: string): boolean {
 export function isValidMAC(mac: string): boolean {
 	const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/
 	return macRegex.test(mac)
+}
+
+export function isValidDiskPath(path: string): boolean {
+	const diskPathRegex = /^\/dev\/[a-z0-9]+$/
+	return diskPathRegex.test(path)
 }
