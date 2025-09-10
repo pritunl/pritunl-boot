@@ -30,8 +30,6 @@ export interface Data {
 	vlan6: number
 	mtu: number
 	interface?: string
-	interface1?: string
-	interface2?: string
 	raid: number
 	ssh_keys: string
 	long_url_key: boolean
@@ -82,6 +80,7 @@ function Manage() {
 	const [gatewayIp6, setGatewayIp6] = useState("")
 	const [vlan, setVlan] = useState("")
 	const [vlan6, setVlan6] = useState("")
+	const [mtu, setMtu] = useState("")
 	const [bondedNetwork, setBondedNetwork] = useState(false)
 	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
@@ -351,7 +350,7 @@ function Manage() {
 					</Text>
 					<TextField.Root
 						id="vlan"
-						placeholder="100"
+						placeholder="0"
 						value={vlan}
 						onChange={(e) => setVlan(e.target.value)}
 					/>
@@ -391,9 +390,22 @@ function Manage() {
 					</Text>
 					<TextField.Root
 						id="vlan6"
-						placeholder="200"
+						placeholder="0"
 						value={vlan6}
 						onChange={(e) => setVlan6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="mtu">
+						Network MTU
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="mtu"
+						placeholder="1500"
+						value={mtu}
+						onChange={(e) => setMtu(e.target.value)}
 					/>
 				</Flex>
 			</>)}
@@ -412,6 +424,7 @@ function Manage() {
 						gateway_ip6: gatewayIp6,
 						vlan: vlan ? parseInt(vlan, 10) : 0,
 						vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
+						mtu: mtu ? parseInt(mtu, 10) : 0,
 						root_size: rootSize,
 						raid: parseInt(raidConfig, 10),
 						disks: selectedDisks,

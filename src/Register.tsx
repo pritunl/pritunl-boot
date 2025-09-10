@@ -22,9 +22,9 @@ function Register() {
 	const [publicIp6, setPublicIp6] = useState("")
 	const [gatewayIp6, setGatewayIp6] = useState("")
 	const [interfaceName, setInterfaceName] = useState("")
-	const [interfaceName2, setInterfaceName2] = useState("")
 	const [vlan, setVlan] = useState("")
 	const [vlan6, setVlan6] = useState("")
+	const [mtu, setMtu] = useState("")
 	const [bondedNetwork, setBondedNetwork] = useState(false)
 	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
@@ -146,7 +146,7 @@ function Register() {
 							</Text>
 							<TextField.Root
 								id="vlan"
-								placeholder="100"
+								placeholder="0"
 								value={vlan}
 								onChange={(e) => setVlan(e.target.value)}
 							/>
@@ -186,37 +186,22 @@ function Register() {
 							</Text>
 							<TextField.Root
 								id="vlan6"
-								placeholder="200"
+								placeholder="0"
 								value={vlan6}
 								onChange={(e) => setVlan6(e.target.value)}
 							/>
 						</Flex>
-					</>)}
 
-					{setupMode === "static" && bondedNetwork &&
-							provider !== "latitude" && (<>
 						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="interface1">
-								Interface Name 1
-								<Text color="gray"> (Leave Blank to Auto Detect)</Text>
+							<Text as="label" htmlFor="mtu">
+								Network MTU
+								<Text color="gray"> (Optional)</Text>
 							</Text>
 							<TextField.Root
-								id="interface1"
-								placeholder="eth0"
-								value={interfaceName}
-								onChange={(e) => setInterfaceName(e.target.value)}
-							/>
-						</Flex>
-						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="interface2">
-								Interface Name 2
-								<Text color="gray"> (Leave Blank to Auto Detect)</Text>
-							</Text>
-							<TextField.Root
-								id="interface2"
-								placeholder="eth1"
-								value={interfaceName2}
-								onChange={(e) => setInterfaceName2(e.target.value)}
+								id="mtu"
+								placeholder="1500"
+								value={mtu}
+								onChange={(e) => setMtu(e.target.value)}
 							/>
 						</Flex>
 					</>)}
@@ -310,9 +295,8 @@ function Register() {
 								gateway_ip6: gatewayIp6,
 								vlan: vlan ? parseInt(vlan, 10) : 0,
 								vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
+								mtu: mtu ? parseInt(mtu, 10) : 0,
 								interface: bondedNetwork ? undefined : interfaceName,
-								interface1: bondedNetwork ? interfaceName : undefined,
-								interface2: bondedNetwork ? interfaceName2 : undefined,
 								root_size: rootSize,
 								raid: parseInt(raidConfig, 10),
 								ssh_keys: sshKeys,
