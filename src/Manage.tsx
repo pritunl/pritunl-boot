@@ -9,7 +9,7 @@ import {
 	Text, TextArea,
 	Button, TextField,
 	Select, CheckboxCards,
-	AlertDialog,
+	Switch, AlertDialog,
 } from "@radix-ui/themes"
 
 export interface Error {
@@ -69,14 +69,24 @@ function Manage() {
 		return
 	}
 
-	const [_disabled, _setDisabled] = useState<boolean>(false)
+	const [disabled, setDisabled] = useState<boolean>(false)
 	const [errorMsg, setErrorMsg] = useState<string>("")
 	const [ipxeConf, setIpxeConf] = useState<string>("")
-	const [_data, setData] = useState<Data>()
+	const [data, setData] = useState<Data>()
 	const [system, setSystem] = useState<System>()
 
-	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
+	const [networkMode, setNetworkMode] = useState("dhcp")
+	const [publicIp, setPublicIp] = useState("")
+	const [gatewayIp, setGatewayIp] = useState("")
+	const [publicIp6, setPublicIp6] = useState("")
+	const [gatewayIp6, setGatewayIp6] = useState("")
+	const [vlan, setVlan] = useState("")
+	const [vlan6, setVlan6] = useState("")
+	const [bondedNetwork, setBondedNetwork] = useState(false)
+	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
+
+	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
 	const [selectedIfaces, setSelectedIfaces] = useState<string[]>([]);
 
 	let baseUrl: string
@@ -160,6 +170,287 @@ function Manage() {
 		)
 	})
 
+	let body: React.ReactNode
+	if (!data || !system) {
+		body = <>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="ipxe-url">
+					iPXE Chain URL
+				</Text>
+				<TextField.Root
+					id="ipxe-url"
+					readOnly={true}
+					style={{
+						fontSize: "14px",
+						fontFamily: "Roboto Mono",
+					}}
+					value={
+						`${baseUrl}/${bootId}.ipxe`
+					}
+				/>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="ipxe-conf">
+					iPXE Configuration
+				</Text>
+				<TextArea
+					id="ipxe-conf"
+					rows={10}
+					spellCheck={false}
+					value={ipxeConf}
+					onChange={(e) => setIpxeConf(e.target.value)}
+				/>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="ks-url">
+					Kickstart URL
+				</Text>
+				<TextField.Root
+					id="ks-url"
+					readOnly={true}
+					style={{
+						fontSize: "14px",
+						fontFamily: "Roboto Mono",
+					}}
+					value={
+						`${baseUrl}/${bootId}.ks`
+					}
+				/>
+			</Flex>
+		</>
+	} else {
+		body = <>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="install-disks">
+					Select Install Disks
+				</Text>
+				<CheckboxCards.Root
+					id="install-disks"
+					defaultValue={[]}
+					columns="1"
+					size="1"
+					value={selectedDisks}
+					onValueChange={(selected: string[]) => {
+						setSelectedDisks(selected)
+					}}
+				>
+					{diskElms}
+				</CheckboxCards.Root>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="disk-size">
+					Root Filesystem Size
+					<Text color="gray"> (Leave Blank to Fill Disk)</Text>
+				</Text>
+				<TextField.Root
+					id="disk-size"
+					placeholder="Fill Entire Disk"
+					value={rootSize}
+					onChange={(e) => setRootSize(e.target.value)}
+				/>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="raid-config">
+					RAID Configuration
+				</Text>
+				<Select.Root
+					value={raidConfig}
+					onValueChange={setRaidConfig}
+				>
+					<Select.Trigger id="raid-config"/>
+					<Select.Content>
+						<Select.Item value="-1">No RAID</Select.Item>
+						<Select.Item value="1">RAID 1</Select.Item>
+						<Select.Item value="10">RAID 10</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="install-ifaces">
+					Select Network Interfaces
+				</Text>
+				<CheckboxCards.Root
+					id="install-ifaces"
+					defaultValue={[]}
+					columns="1"
+					size="1"
+					value={selectedIfaces}
+					onValueChange={(selected: string[]) => {
+						setSelectedIfaces(selected)
+					}}
+				>
+					{ifaceElms}
+				</CheckboxCards.Root>
+			</Flex>
+
+			{data.provider !== "latitude" && (<>
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="network-config">
+						Network Configuration
+					</Text>
+					<Select.Root
+						value={networkMode}
+						onValueChange={setNetworkMode}
+					>
+						<Select.Trigger id="network-config"/>
+						<Select.Content>
+							<Select.Item value="static">Static</Select.Item>
+							<Select.Item value="dhcp">DHCP</Select.Item>
+						</Select.Content>
+					</Select.Root>
+				</Flex>
+			</>)}
+
+			{data.provider !== "latitude" && data.network_mode === "static" && (<>
+				<Flex gap="2">
+					<Switch
+						id="bonded-network"
+						checked={bondedNetwork}
+						onCheckedChange={setBondedNetwork}
+					/>
+					<Text as="label" htmlFor="bonded-network">
+						Bonded Network
+					</Text>
+				</Flex>
+			</>)}
+
+			{networkMode === "static" && data.provider !== "latitude" && (<>
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="public-ip">
+						Public IPv4
+					</Text>
+					<TextField.Root
+						id="public-ip"
+						placeholder="142.250.73.110/24"
+						value={publicIp}
+						onChange={(e) => setPublicIp(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="gateway-ip">
+						Gateway IPv4
+					</Text>
+					<TextField.Root
+						id="gateway-ip"
+						placeholder="142.250.73.1"
+						value={gatewayIp}
+						onChange={(e) => setGatewayIp(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="vlan">
+						VLAN ID IPv4
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="vlan"
+						placeholder="100"
+						value={vlan}
+						onChange={(e) => setVlan(e.target.value)}
+					/>
+				</Flex>
+			</>)}
+
+			{data.network_mode === "static" && networkMode === "static" &&
+					data.provider !== "latitude" && (<>
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="public-ip6">
+						Public IPv6
+					</Text>
+					<TextField.Root
+						id="public-ip6"
+						placeholder="2607:f8b0:400a:800::200e/64"
+						value={publicIp6}
+						onChange={(e) => setPublicIp6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="gateway-ip6">
+						Gateway IPv6
+					</Text>
+					<TextField.Root
+						id="gateway-ip6"
+						placeholder="2607:f8b0:400a:800::1"
+						value={gatewayIp6}
+						onChange={(e) => setGatewayIp6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="vlan6">
+						VLAN ID IPv6
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="vlan6"
+						placeholder="200"
+						value={vlan6}
+						onChange={(e) => setVlan6(e.target.value)}
+					/>
+				</Flex>
+			</>)}
+
+			<Button
+				disabled={disabled}
+				onClick={() => {
+					setDisabled(true)
+
+					const payload = {
+						network_mode: networkMode,
+						bonded_network: bondedNetwork,
+						public_ip: publicIp,
+						gateway_ip: gatewayIp,
+						public_ip6: publicIp6,
+						gateway_ip6: gatewayIp6,
+						vlan: vlan ? parseInt(vlan, 10) : 0,
+						vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
+						root_size: rootSize,
+						raid: parseInt(raidConfig, 10),
+						disks: selectedDisks,
+						interfaces: selectedIfaces,
+					}
+
+					fetch(`/${data.id}/install`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify(payload),
+					}).then(async (resp) => {
+						setDisabled(false)
+						if (!resp.ok) {
+							if (resp.status === 400) {
+								const errorData = await resp.json() as {
+									error: string
+								}
+								setErrorMsg(errorData.error || "Unknown error")
+							}
+							try {
+								const respText = await resp.text()
+								setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+							} catch {
+								setErrorMsg(`Unknown error: ${resp.status}`)
+							}
+						} else {
+							// TODO Clear install options prompt
+						}
+					}).catch((error) => {
+						setDisabled(false)
+						setErrorMsg(`Unknown error: ${error}`)
+					})
+				}}
+			>Start Install</Button>
+		</>
+	}
+
 	return (
 		<Box>
 			<Container align="center" maxWidth="480px">
@@ -179,108 +470,7 @@ function Manage() {
 						}}
 					/>
 					<Heading>Linux Boot Generator</Heading>
-
-					{system && (<>
-						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="install-disks">
-								Select Install Disks
-							</Text>
-							<CheckboxCards.Root
-								id="install-disks"
-								defaultValue={[]}
-								columns="1"
-								size="1"
-								value={selectedDisks}
-								onValueChange={(selected: string[]) => {
-									setSelectedDisks(selected)
-								}}
-							>
-								{diskElms}
-							</CheckboxCards.Root>
-						</Flex>
-
-						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="raid-config">
-								RAID Configuration
-							</Text>
-							<Select.Root
-								value={raidConfig}
-								onValueChange={setRaidConfig}
-							>
-								<Select.Trigger id="raid-config"/>
-								<Select.Content>
-									<Select.Item value="-1">No RAID</Select.Item>
-									<Select.Item value="1">RAID 1</Select.Item>
-									<Select.Item value="10">RAID 10</Select.Item>
-								</Select.Content>
-							</Select.Root>
-						</Flex>
-
-						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="install-ifaces">
-								Select Network Interfaces
-							</Text>
-							<CheckboxCards.Root
-								id="install-ifaces"
-								defaultValue={[]}
-								columns="1"
-								size="1"
-								value={selectedIfaces}
-								onValueChange={(selected: string[]) => {
-									setSelectedIfaces(selected)
-								}}
-							>
-								{ifaceElms}
-							</CheckboxCards.Root>
-						</Flex>
-					</>)}
-
-					<Flex direction="column" gap="1">
-						<Text as="label" htmlFor="ipxe-url">
-							iPXE Chain URL
-						</Text>
-						<TextField.Root
-							id="ipxe-url"
-							readOnly={true}
-							style={{
-								fontSize: "14px",
-								fontFamily: "Roboto Mono",
-							}}
-							value={
-								`${baseUrl}/${bootId}.ipxe`
-							}
-						/>
-					</Flex>
-
-					<Flex direction="column" gap="1">
-						<Text as="label" htmlFor="ipxe-conf">
-							iPXE Configuration
-						</Text>
-						<TextArea
-							id="ipxe-conf"
-							rows={10}
-							spellCheck={false}
-							value={ipxeConf}
-							onChange={(e) => setIpxeConf(e.target.value)}
-						/>
-					</Flex>
-
-					<Flex direction="column" gap="1">
-						<Text as="label" htmlFor="ks-url">
-							Kickstart URL
-						</Text>
-						<TextField.Root
-							id="ks-url"
-							readOnly={true}
-							style={{
-								fontSize: "14px",
-								fontFamily: "Roboto Mono",
-							}}
-							value={
-								`${baseUrl}/${bootId}.ks`
-							}
-						/>
-					</Flex>
+					{body}
 				</Flex>
 			</Container>
 			<AlertDialog.Root open={!!errorMsg}>
