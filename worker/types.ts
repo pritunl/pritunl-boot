@@ -18,8 +18,6 @@ export interface Configuration {
 	vlan6: number
 	mtu: number
 	interface?: string
-	interface1?: string
-	interface2?: string
 	root_size: string
 	raid: number
 	ssh_keys: string

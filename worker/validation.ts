@@ -22,12 +22,6 @@ export function validateConfiguration(
 	if (data.interface && !isValidInterfaceName(data.interface)) {
 		throw new Types.ValidationError("Invalid interface name format")
 	}
-	if (data.interface1 && !isValidInterfaceName(data.interface1)) {
-		throw new Types.ValidationError("Invalid interface1 name format")
-	}
-	if (data.interface2 && !isValidInterfaceName(data.interface2)) {
-		throw new Types.ValidationError("Invalid interface2 name format")
-	}
 
 	if (data.interfaces) {
 		data.interfaces.forEach((iface: string) => {
@@ -60,6 +54,9 @@ export function validateConfiguration(
 		if (data.vlan6 && !isValidVLAN(data.vlan6)) {
 			throw new Types.ValidationError("Invalid VLAN ID for IPv6")
 		}
+		if (data.mtu && !isValidMtu(data.mtu)) {
+			throw new Types.ValidationError("Invalid network MTU")
+		}
 	} else {
 		data.public_ip = ""
 		data.gateway_ip = ""
@@ -67,15 +64,15 @@ export function validateConfiguration(
 		data.gateway_ip6 = ""
 		data.vlan = 0
 		data.vlan6 = 0
+		data.mtu = 0
 	}
 
 	if (data.mode === "live") {
 		data.bonded_network = false
-		data.interface1 = ""
-		data.interface2 = ""
 		data.public_ip6 = ""
 		data.gateway_ip6 = ""
 		data.vlan6 = 0
+		data.mtu = 0
 	}
 
 	if (data.root_size && data.root_size !== "") {
@@ -138,8 +135,6 @@ export function validateConfiguration(
 		vlan6: data.vlan6,
 		mtu: 0,
 		interface: data.interface,
-		interface1: data.interface1,
-		interface2: data.interface2,
 		root_size: data.root_size,
 		raid: data.raid,
 		ssh_keys: data.ssh_keys,
@@ -262,6 +257,10 @@ export function isValidIPv6CIDR(ip: string): boolean {
 
 export function isValidVLAN(vlanId: number): boolean {
 	return !isNaN(vlanId) && vlanId >= 1 && vlanId <= 4094
+}
+
+export function isValidMtu(mtu: number): boolean {
+	return !isNaN(mtu) && mtu >= 68 && mtu <= 65536
 }
 
 export function isValidInterfaceName(name: string): boolean {

@@ -29,7 +29,7 @@ boot`
 function getKernelNetwork(data: Types.Configuration): string {
 	const publicIp = Utils.cidrToIp(data.public_ip)
 	const netmask = Utils.cidrToNetmask(data.public_ip)
-	let iface = data.interface || data.interface1
+	let iface = data.interface || "eth0"
 	if (data.vlan != 0) {
 		iface += `.${data.vlan}`
 	}
@@ -261,9 +261,13 @@ tee /usr/local/bin/network-migration.sh << EOF
 #!/bin/bash
 set -x
 MAC_ADDR="$PUBLIC_MAC_ADDR"
+NET_MODE="${data.network_mode}"
 PUBLIC_IP="${data.public_ip}"
 GATEWAY_IP="${data.gateway_ip}"
 VLAN_ID="${data.vlan}"
+PUBLIC_IP6="${data.public_ip6}"
+GATEWAY_IP6="${data.gateway_ip6}"
+VLAN_ID6="${data.vlan6}"
 MTU="${data.mtu}"
 
 get_iface_from_mac() {
@@ -291,16 +295,60 @@ done
 
 sleep 1
 
-if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ]; then
-    VLAN_CON_NAME="\\\${INTERFACE}.\\\${VLAN_ID}"
-
+if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ] && [ -n "\\$VLAN_ID6" ] && [ "\\$VLAN_ID6" != "0" ]; then
     nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" ipv4.method disabled ipv6.method ignore connection.autoconnect yes
 
+    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
+        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
+    fi
+
     nmcli connection up "\\$INTERFACE"
+else
+    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" connection.autoconnect yes
 
-    sleep 1
+    if [ -z "\\$VLAN_ID" ] || [ "\\$VLAN_ID" = "0" ]; then
+        if [ "\\$NET_MODE" = "static" ]; then
+            nmcli connection modify "\\$INTERFACE" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
+        else
+            nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
+        fi
+    fi
 
-    nmcli connection add type vlan con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4" connection.autoconnect yes
+    if [ -z "\\$VLAN_ID6" ] || [ "\\$VLAN_ID6" = "0" ]; then
+        if [ -n "\\$PUBLIC_IP6" ]; then
+            nmcli connection modify "\\$INTERFACE" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
+        fi
+        if [ -n "\\$GATEWAY_IP6" ]; then
+            nmcli connection modify "\\$INTERFACE" ipv6.gateway "\\$GATEWAY_IP6"
+        fi
+    fi
+
+    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
+        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
+    fi
+
+    nmcli connection up "\\$INTERFACE"
+fi
+
+sleep 1
+
+if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ] && [ "\\$VLAN_ID" = "\\$VLAN_ID6" ]; then
+    VLAN_CON_NAME="\\\${INTERFACE}.\\\${VLAN_ID}"
+
+    nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" connection.autoconnect yes
+
+    if [ "\\$NET_MODE" = "static" ]; then
+        nmcli connection modify "\\$VLAN_CON_NAME" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
+    else
+        nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
+    fi
+
+    if [ -n "\\$PUBLIC_IP6" ]; then
+        nmcli connection modify "\\$VLAN_CON_NAME" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
+    fi
+    if [ -n "\\$GATEWAY_IP6" ]; then
+        nmcli connection modify "\\$VLAN_CON_NAME" ipv6.gateway "\\$GATEWAY_IP6"
+    fi
 
     if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
         nmcli connection modify "\\$VLAN_CON_NAME" 802.mtu "\\$MTU"
@@ -308,13 +356,42 @@ if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ]; then
 
     nmcli connection up "\\$VLAN_CON_NAME"
 else
-    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4" connection.autoconnect yes
+    if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ]; then
+        VLAN_CON_NAME="\\$INTERFACE.\\$VLAN_ID"
 
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
+        nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" connection.autoconnect yes
+
+        if [ "\\$NET_MODE" = "static" ]; then
+            nmcli connection modify "\\$VLAN_CON_NAME" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
+        else
+            nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
+        fi
+
+        if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
+            nmcli connection modify "\\$VLAN_CON_NAME" 802.mtu "\\$MTU"
+        fi
+
+        nmcli connection up "\\$VLAN_CON_NAME"
     fi
 
-    nmcli connection up "\\$INTERFACE"
+    if [ -n "\\$VLAN_ID6" ] && [ "\\$VLAN_ID6" != "0" ]; then
+        VLAN_CON_NAME6="\\$INTERFACE.\\$VLAN_ID6"
+
+        nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME6" ifname "\\$VLAN_CON_NAME6" dev "\\$INTERFACE" id "\\$VLAN_ID6" connection.autoconnect yes
+
+        if [ -n "\\$PUBLIC_IP6" ]; then
+            nmcli connection modify "\\$VLAN_CON_NAME6" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
+        fi
+        if [ -n "\\$GATEWAY_IP6" ]; then
+            nmcli connection modify "\\$VLAN_CON_NAME6" ipv6.gateway "\\$GATEWAY_IP6"
+        fi
+
+        if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
+            nmcli connection modify "\\$VLAN_CON_NAME6" 802.mtu "\\$MTU"
+        fi
+
+        nmcli connection up "\\$VLAN_CON_NAME6"
+    fi
 fi
 
 systemctl disable network-migration.service 2>/dev/null || true
