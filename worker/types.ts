@@ -20,6 +20,7 @@ export interface Register {
 	interface?: string
 	interface1?: string
 	interface2?: string
+	disk_size: string
 	raid: number
 	ssh_keys: string
 	long_url_key: boolean

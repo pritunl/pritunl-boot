@@ -66,6 +66,17 @@ export function validateRegister(data: Types.Register): Types.Register {
 		data.vlan6 = 0
 	}
 
+	if (data.disk_size && data.disk_size !== "") {
+		data.disk_size = data.disk_size.toUpperCase()
+		const diskSizeRegex = /^\d+GB$/
+		if (!diskSizeRegex.test(data.disk_size)) {
+			throw new Types.ValidationError(
+				"Invalid disk_size format. Must be a number followed " +
+				"by 'GB' (e.g., '50GB') or blank to fill disk"
+			)
+		}
+	}
+
 	if (data.raid && ![-1, 1, 10].includes(data.raid)) {
 		throw new Types.ValidationError("Invalid RAID configuration")
 	}
@@ -107,6 +118,7 @@ export function validateRegister(data: Types.Register): Types.Register {
 		interface: data.interface,
 		interface1: data.interface1,
 		interface2: data.interface2,
+		disk_size: data.disk_size,
 		raid: data.raid,
 		ssh_keys: data.ssh_keys,
 		long_url_key: data.long_url_key,
