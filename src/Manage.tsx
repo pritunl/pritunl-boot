@@ -246,7 +246,7 @@ function Manage() {
 				</Text>
 				<TextField.Root
 					id="disk-size"
-					placeholder="Fill Entire Disk"
+					placeholder="50GB"
 					value={rootSize}
 					onChange={(e) => setRootSize(e.target.value)}
 				/>
@@ -305,7 +305,7 @@ function Manage() {
 				</Flex>
 			</>)}
 
-			{data.provider !== "latitude" && data.network_mode === "static" && (<>
+			{data.provider !== "latitude" && networkMode === "static" && (<>
 				<Flex gap="2">
 					<Switch
 						id="bonded-network"
@@ -357,11 +357,11 @@ function Manage() {
 				</Flex>
 			</>)}
 
-			{data.network_mode === "static" && networkMode === "static" &&
-					data.provider !== "latitude" && (<>
+			{networkMode === "static" && data.provider !== "latitude" && (<>
 				<Flex direction="column" gap="1">
 					<Text as="label" htmlFor="public-ip6">
 						Public IPv6
+						<Text color="gray"> (Optional)</Text>
 					</Text>
 					<TextField.Root
 						id="public-ip6"
@@ -374,6 +374,7 @@ function Manage() {
 				<Flex direction="column" gap="1">
 					<Text as="label" htmlFor="gateway-ip6">
 						Gateway IPv6
+						<Text color="gray"> (Optional)</Text>
 					</Text>
 					<TextField.Root
 						id="gateway-ip6"

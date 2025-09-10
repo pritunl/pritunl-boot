@@ -158,6 +158,7 @@ function Register() {
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="public-ip6">
 								Public IPv6
+								<Text color="gray"> (Optional)</Text>
 							</Text>
 							<TextField.Root
 								id="public-ip6"
@@ -170,6 +171,7 @@ function Register() {
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="gateway-ip6">
 								Gateway IPv6
+								<Text color="gray"> (Optional)</Text>
 							</Text>
 							<TextField.Root
 								id="gateway-ip6"
@@ -230,7 +232,7 @@ function Register() {
 							</Text>
 							<TextField.Root
 								id="disk-size"
-								placeholder="Fill Entire Disk"
+								placeholder="50GB"
 								value={rootSize}
 								onChange={(e) => setRootSize(e.target.value)}
 							/>
