@@ -13,6 +13,7 @@ import {
 function Register() {
 	const { navigate } = Router.useRouter()
 	const [disabled, setDisabled] = useState(false)
+	const [errorMsg, setErrorMsg] = useState("")
 	const [setupMode, setSetupMode] = useState("live")
 	const [provider, setProvider] = useState("none")
 	const [networkMode, setNetworkMode] = useState("dhcp")
@@ -25,10 +26,10 @@ function Register() {
 	const [vlan, setVlan] = useState("")
 	const [vlan6, setVlan6] = useState("")
 	const [bondedNetwork, setBondedNetwork] = useState(false)
-	const [longUrlKey, setLongUrlKey] = useState(false)
+	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
 	const [sshKeys, setSshKeys] = useState("")
-	const [errorMsg, setErrorMsg] = useState("")
+	const [longUrlKey, setLongUrlKey] = useState(false)
 
 	return (
 		<Box>
@@ -238,6 +239,19 @@ function Register() {
 
 					{setupMode === "static" && (<>
 						<Flex direction="column" gap="1">
+							<Text as="label" htmlFor="disk-size">
+								Root Filesystem Size
+								<Text color="gray"> (Leave Blank to Fill Disk)</Text>
+							</Text>
+							<TextField.Root
+								id="disk-size"
+								placeholder="Fill Entire Disk"
+								value={rootSize}
+								onChange={(e) => setRootSize(e.target.value)}
+							/>
+						</Flex>
+
+						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="raid-config">
 								RAID Configuration
 							</Text>
@@ -299,6 +313,7 @@ function Register() {
 								interface: bondedNetwork ? undefined : interfaceName,
 								interface1: bondedNetwork ? interfaceName : undefined,
 								interface2: bondedNetwork ? interfaceName2 : undefined,
+								root_size: rootSize,
 								raid: parseInt(raidConfig, 10),
 								ssh_keys: sshKeys,
 								long_url_key: longUrlKey,
