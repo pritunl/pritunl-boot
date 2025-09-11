@@ -2,7 +2,7 @@ import * as Types from "./types"
 import * as Utils from "./utils"
 
 export function validateConfiguration(
-	data: Types.Configuration): Types.Configuration {
+	data: Types.Configuration, install: boolean = false): Types.Configuration {
 
 	if (!data.mode || !["live", "static"].includes(data.mode)) {
 		throw new Types.ValidationError("Invalid mode")
@@ -25,12 +25,15 @@ export function validateConfiguration(
 
 	if (data.interfaces) {
 		data.interfaces.forEach((iface: string) => {
-			if (!isValidInterfaceName(iface)) {
-				throw new Types.ValidationError("Invalid interface name in interfaces")
+			if (!isValidMAC(iface)) {
+				throw new Types.ValidationError("Invalid interface in interfaces")
 			}
 		})
 	} else {
 		data.interfaces = []
+	}
+	if (install && data.interfaces.length < 1) {
+		throw new Types.ValidationError("Missing required interfaces")
 	}
 
 	if (data.network_mode === "static") {
@@ -67,14 +70,6 @@ export function validateConfiguration(
 		data.mtu = 0
 	}
 
-	if (data.mode === "live") {
-		data.bonded_network = false
-		data.public_ip6 = ""
-		data.gateway_ip6 = ""
-		data.vlan6 = 0
-		data.mtu = 0
-	}
-
 	if (data.root_size && data.root_size !== "") {
 		data.root_size = data.root_size.toUpperCase()
 		const rootSizeRegex = /^\d+GB$/
@@ -86,14 +81,17 @@ export function validateConfiguration(
 		}
 	}
 
-	if (data.disk) {
-		data.disk.forEach((diskPath: string) => {
-			if (!isValidDiskPath(diskPath)) {
-				throw new Types.ValidationError("Invalid disk path in targer_disks")
+	if (data.disks) {
+		data.disks.forEach((diskPath: string) => {
+			if (!isValidDiskName(diskPath)) {
+				throw new Types.ValidationError("Invalid disk name in disks")
 			}
 		})
 	} else {
-		data.disk = []
+		data.disks = []
+	}
+	if (install && data.disks.length < 1) {
+		throw new Types.ValidationError("Missing required disks")
 	}
 
 	if (data.raid && ![-1, 1, 10].includes(data.raid)) {
@@ -133,11 +131,13 @@ export function validateConfiguration(
 		gateway_ip6: data.gateway_ip6,
 		vlan: data.vlan,
 		vlan6: data.vlan6,
-		mtu: 0,
+		mtu: data.mtu,
 		interface: data.interface,
 		root_size: data.root_size,
 		raid: data.raid,
 		ssh_keys: data.ssh_keys,
+		disks: data.disks,
+		interfaces: data.interfaces,
 		long_url_key: data.long_url_key,
 	}
 }
@@ -175,6 +175,7 @@ export function validateSystem(data: Types.System): Types.System {
 		}
 
 		disks.push({
+			name: Utils.filterString(disk.name).substring(0, 128),
 			path: Utils.filterString(disk.path).substring(0, 128),
 			size: disk.size,
 			model: Utils.filterString(disk.model).substring(0, 128),
@@ -276,7 +277,12 @@ export function isValidMAC(mac: string): boolean {
 	return macRegex.test(mac)
 }
 
+export function isValidDiskName(name: string): boolean {
+    const diskNameRegex = /^[a-z][a-z0-9]*$/
+    return diskNameRegex.test(name) && name.length <= 20
+}
+
 export function isValidDiskPath(path: string): boolean {
-	const diskPathRegex = /^\/dev\/[a-z0-9]+$/
-	return diskPathRegex.test(path)
+    const diskPathRegex = /^\/dev\/[a-z][a-z0-9]*$/
+    return diskPathRegex.test(path) && path.length <= 25
 }

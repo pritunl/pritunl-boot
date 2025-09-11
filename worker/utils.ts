@@ -15,6 +15,14 @@ export function decodeBase64(data: string): string {
 	return decoder.decode(uint8Array)
 }
 
+export function basename(path: string, ext?: string): string {
+	const name = path.split('/').pop() || path
+	if (ext && name.endsWith(ext)) {
+		return name.slice(0, -ext.length)
+	}
+	return name
+}
+
 export function filterString(input: string): string {
 	input = input.replace("SSH-EOF", "")
 	return input.match(safeCharsRe)?.join("") || ""

@@ -37,28 +37,70 @@ function getKernelNetwork(data: Types.Configuration): string {
 	return `ip=${publicIp}::${data.gateway_ip}:${netmask}::${iface}:off:8.8.8.8`
 }
 
-export function generateKickstartNetwork(data: Types.Configuration): string {
-	let conf = ``
+export function generateKickstartNetwork(
+	data: Types.Configuration, escape: boolean = true): string {
+
 	let rootIface = ""
+	let interfaceConf = ""
+	let esc = escape ? "\\" : ""
+
+	if (data.interfaces) {
+		data.interfaces.forEach((iface: string, index: number) => {
+			interfaceConf += `
+INTERFACE${index}=${esc}$(get_iface_from_mac "${iface}")
+if [ ${esc}$? -ne 0 ] || [ -z "${esc}$INTERFACE${index}" ]; then
+    echo "Failed to find interface with MAC ${iface}"
+    exit 1
+fi`
+		})
+	} else {
+		interfaceConf = `
+INTERFACE=${esc}$(get_iface_from_mac "${esc}$MAC_ADDR")
+if [ ${esc}$? -ne 0 ] || [ -z "${esc}$INTERFACE" ]; then
+    echo "Failed to find interface with MAC ${esc}$MAC_ADDR"
+    exit 1
+fi`
+	}
+
+	let conf = `
+get_iface_from_mac() {
+    local mac="${esc}$1"
+    mac=${esc}$(echo "${esc}$mac" | tr '[:upper:]' '[:lower:]')
+    interface=${esc}$(ip -br link show | grep -i "${esc}$mac" | awk '{print ${esc}$1}')
+    if [ -z "${esc}$interface" ]; then
+        echo "No interface found with MAC ${esc}$mac"
+        return 1
+    fi
+    echo "${esc}$interface"
+}
+${interfaceConf}
+
+nmcli general hostname cloud
+
+nmcli -g UUID connection show | while read connid; do
+    nmcli connection delete "${esc}$connid"
+done
+
+sleep 1`
 
 	if (data.bonded_network && data.interfaces && data.interfaces.length >= 2) {
 		rootIface = "bond0"
-        let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
-        if (data.mtu) {
-            bondOpts += `,mtu=${data.mtu}`
-        }
+		let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
+		if (data.mtu) {
+			bondOpts += `,mtu=${data.mtu}`
+		}
 
 		conf += `
 nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
-		data.interfaces.forEach((iface: string, index: number) => {
+		data.interfaces.forEach((_iface: string, index: number) => {
 			conf += `
-nmcli connection add type bond-slave con-name bond0-slave${index} ifname ${iface} master bond0`
+nmcli connection add type bond-slave con-name bond0-slave${index} ifname "${esc}$INTERFACE${index}" master bond0`
 		})
 	} else {
 		if (data.interfaces) {
-			rootIface = data.interfaces[0]
+			rootIface = `"${esc}$INTERFACE0"`
 		} else {
-			rootIface = `"\\$INTERFACE"`
+			rootIface = `"${esc}$INTERFACE"`
 		}
 
 		conf += `
@@ -189,7 +231,7 @@ export function generateKickstart(data: Types.Configuration): string {
 		publicMacFunc = `get_active_mac`
 	}
 
-    const networkScript = generateKickstartNetwork(data)
+	const networkScript = generateKickstartNetwork(data, true)
 
 	let rootSize = ""
 	if (!data.root_size || data.root_size === "") {
@@ -453,31 +495,6 @@ PUBLIC_IP6="${data.public_ip6}"
 GATEWAY_IP6="${data.gateway_ip6}"
 VLAN_ID6="${data.vlan6}"
 MTU="${data.mtu}"
-
-get_iface_from_mac() {
-    local mac="\\$1"
-    mac=\\$(echo "\\$mac" | tr '[:upper:]' '[:lower:]')
-    interface=\\$(ip -br link show | grep -i "\\$mac" | awk '{print \\$1}')
-    if [ -z "\\$interface" ]; then
-        echo "No interface found with MAC \\$mac"
-        return 1
-    fi
-    echo "\\$interface"
-}
-
-INTERFACE=\\$(get_iface_from_mac "\\$MAC_ADDR")
-if [ \\$? -ne 0 ] || [ -z "\\$INTERFACE" ]; then
-    echo "Failed to find interface with MAC \\$MAC_ADDR"
-    exit 1
-fi
-
-nmcli general hostname cloud
-
-nmcli -g UUID connection show | while read connid; do
-    nmcli connection delete "\\$connid"
-done
-
-sleep 1
 ${networkScript}
 
 systemctl disable network-migration.service 2>/dev/null || true
@@ -654,7 +671,7 @@ echo "=== Sending system state ==="
 curl -v -X POST --data "$POST_DATA" "https://boot.pritunl.com/${data.id}/system"
 
 poll_disk_decode() {
-    local url="https://boot.pritunl.com/${data.id}/disk"
+    local url="https://boot.pritunl.com/${data.id}/disks"
     local max_wait=600
     local response_file=$(mktemp)
 
@@ -848,14 +865,6 @@ EOF
 tee /usr/local/bin/network-migration.sh << EOF
 #!/bin/bash
 set -x
-
-nmcli general hostname cloud
-
-nmcli -g UUID connection show | while read connid; do
-    nmcli connection delete "\\$connid"
-done
-
-sleep 1
 $NETWORK_CONFIG
 
 systemctl disable network-migration.service 2>/dev/null || true

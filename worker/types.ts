@@ -21,7 +21,7 @@ export interface Configuration {
 	root_size: string
 	raid: number
 	ssh_keys: string
-	disk?: string[]
+	disks?: string[]
 	interfaces?: string[]
 	long_url_key: boolean
 }
@@ -33,6 +33,7 @@ export interface System {
 }
 
 export interface Disk {
+	name: string
 	path: string
 	size: number
 	model: string
