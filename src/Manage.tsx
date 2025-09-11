@@ -9,7 +9,8 @@ import {
 	Text, TextArea,
 	Button, TextField,
 	Select, CheckboxCards,
-	Switch, AlertDialog,
+	Switch, Callout,
+	Spinner, AlertDialog
 } from "@radix-ui/themes"
 
 export interface Error {
@@ -59,20 +60,19 @@ export interface Interface {
 	model: string
 }
 
-var curSync: Utils.SyncInterval
+var stageSync: Utils.SyncInterval
+var systemSync: Utils.SyncInterval
 
 function Manage() {
 	const { params } = Router.useRouter()
 	const bootId = params.bootId
-	if (!bootId) {
-		return
-	}
 
 	const [disabled, setDisabled] = useState<boolean>(false)
 	const [errorMsg, setErrorMsg] = useState<string>("")
 	const [ipxeConf, setIpxeConf] = useState<string>("")
 	const [data, setData] = useState<Data>()
 	const [system, setSystem] = useState<System>()
+	const [stage, setStage] = useState("")
 
 	const [networkMode, setNetworkMode] = useState("dhcp")
 	const [publicIp, setPublicIp] = useState("")
@@ -93,6 +93,10 @@ function Manage() {
 	baseUrl = "https://boot.pritunl.com"
 
 	useEffect(() => {
+		if (!bootId) {
+			return
+		}
+
 		fetch(`/${bootId}/data`)
 			.then(async (resp) => {
 				if (!resp.ok) {
@@ -117,8 +121,36 @@ function Manage() {
 				setErrorMsg(`Unknown error: ${error}`)
 			})
 
-		curSync?.stop()
-		curSync = new Utils.SyncInterval(async () => {
+		stageSync?.stop()
+		stageSync = new Utils.SyncInterval(async () => {
+			let resp = await fetch(`/${bootId}/stage`)
+			if (!resp.ok) {
+				if (resp.status === 400) {
+					const errorData = await resp.json() as Error
+					setErrorMsg(errorData.error || "Unknown error")
+				} else {
+					try {
+						const respText = await resp.text()
+						setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+					} catch {
+						setErrorMsg(`Unknown error: ${resp.status}`)
+					}
+				}
+			} else {
+				const stageData = await resp.json() as {
+					stage: string
+				}
+				if (stageData.stage) {
+					setStage(stageData.stage)
+					if (stageData.stage === "complete") {
+						stageSync?.stop()
+					}
+				}
+			}
+		}, 1000, true)
+
+		systemSync?.stop()
+		systemSync = new Utils.SyncInterval(async () => {
 			let resp = await fetch(`/${bootId}/system`)
 			if (!resp.ok) {
 				if (resp.status === 400) {
@@ -135,11 +167,11 @@ function Manage() {
 			} else {
 				const systemData = await resp.json() as System
 				if (systemData.ready) {
-					curSync.stop()
 					setSystem(systemData)
+					systemSync?.stop()
 				}
 			}
-		}, 1000)
+		}, 1000, true)
 	}, [bootId])
 
 	let diskElms: React.ReactNode[] = []
@@ -173,7 +205,55 @@ function Manage() {
 	})
 
 	let body: React.ReactNode
-	if (!data || !system) {
+	if (!bootId || !stage) {
+		body = <></>
+	} else if (stage && stage != "wait") {
+		let stageColor = ""
+		let stageInfo = ""
+		let spinner = false
+		switch (stage) {
+			case "ready":
+				spinner = true
+				stageColor = "yellow"
+				stageInfo = "Waiting for installer to receive configuration..."
+				break
+			case "pre":
+				spinner = true
+				stageColor = "brown"
+				stageInfo = "System in pre-installation..."
+				break
+			case "install":
+				spinner = true
+				stageColor = "sky"
+				stageInfo = "System installation running..."
+				break
+			case "post":
+				spinner = true
+				stageColor = "mint"
+				stageInfo = "System in post-installation..."
+				break
+			case "complete":
+				spinner = false
+				stageColor = "green"
+				stageInfo = "Installation complete"
+				break
+			default:
+				spinner = true
+				stageColor = "gray"
+				stageInfo = "Unknown install stage"
+		}
+
+		body = <>
+			<Callout.Root variant="outline" color={stageColor as any}>
+				<Callout.Icon>
+					{spinner ? <Spinner size="2"/> : <></>}
+				</Callout.Icon>
+				<Callout.Text>
+					<b>{stageInfo}</b>
+				</Callout.Text>
+			</Callout.Root>
+		</>
+	} else if (!data || !system) {
 		body = <>
 			<Flex direction="column" gap="1">
 				<Text as="label" htmlFor="ipxe-url">
@@ -221,9 +301,27 @@ function Manage() {
 					}
 				/>
 			</Flex>
+
+			<Callout.Root variant="outline">
+				<Callout.Icon>
+					<Spinner size="2"/>
+				</Callout.Icon>
+				<Callout.Text>
+					<b>Waiting for installer to start...</b>
+				</Callout.Text>
+			</Callout.Root>
 		</>
 	} else {
 		body = <>
+			<Callout.Root variant="outline">
+				<Callout.Icon>
+					<Spinner size="2"/>
+				</Callout.Icon>
+				<Callout.Text>
+					<b>Installer waiting for configuration...</b>
+				</Callout.Text>
+			</Callout.Root>
+
 			<Flex direction="column" gap="1">
 				<Text as="label" htmlFor="install-disks">
 					Select Install Disks
@@ -456,7 +554,7 @@ function Manage() {
 								}
 							}
 						} else {
-							// TODO Clear install options prompt
+							setStage("ready")
 						}
 					}).catch((error) => {
 						setDisabled(false)
