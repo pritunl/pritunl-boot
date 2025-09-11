@@ -19,54 +19,101 @@ export default {
 					if (match && match[1]) {
 						return getIpxe(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith(".ks") &&
+				}
+				if (url.pathname.endsWith(".ks") &&
 						request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\.ks$/)
 					if (match && match[1]) {
 						return getKs(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/system") &&
+				}
+				if (url.pathname.endsWith("/system") &&
 					request.method == "POST") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/system$/)
 					if (match && match[1]) {
 						return postSystem(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/system") &&
+				}
+				if (url.pathname.endsWith("/system") &&
 					request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/system$/)
 					if (match && match[1]) {
 						return getSystem(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/install") &&
+				}
+				if (url.pathname.endsWith("/install") &&
 					request.method == "POST") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/install$/)
 					if (match && match[1]) {
 						return postInstall(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/data") &&
+				}
+				if (url.pathname.endsWith("/data") &&
 					request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/data$/)
 					if (match && match[1]) {
 						return getData(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/disks") &&
+				}
+				if (url.pathname.endsWith("/disks") &&
 					request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/disks$/)
 					if (match && match[1]) {
 						return getDisks(request, env, match[1])
 					}
-				} else if (url.pathname.endsWith("/network") &&
+				}
+				if (url.pathname.endsWith("/network") &&
 					request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/network$/)
 					if (match && match[1]) {
 						return getNetwork(request, env, match[1])
+					}
+				}
+				if (url.pathname.endsWith("/stage") &&
+					request.method == "GET") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage$/)
+					if (match && match[1]) {
+						return getStage(request, env, match[1])
+					}
+				}
+				if (url.pathname.endsWith("/stage/pre") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage\/pre$/)
+					if (match && match[1]) {
+						return postStage(request, env, match[1], "pre")
+					}
+				}
+				if (url.pathname.endsWith("/stage/install") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage\/install$/)
+					if (match && match[1]) {
+						return postStage(request, env, match[1], "install")
+					}
+				}
+				if (url.pathname.endsWith("/stage/post") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage\/post$/)
+					if (match && match[1]) {
+						return postStage(request, env, match[1], "post")
+					}
+				}
+				if (url.pathname.endsWith("/stage/complete") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage\/complete$/)
+					if (match && match[1]) {
+						return postStage(request, env, match[1], "complete")
 					}
 				}
 
@@ -258,6 +305,7 @@ async function postInstall(request: Request,
 
 	data.id = register.id
 	await db.set("data", data)
+	await db.set("stage", "ready")
 
 	return Response.json({
 		id: data.id,
@@ -338,6 +386,38 @@ async function postSystem(request: Request, env: Types.Env,
 	}
 
 	await db.set("system", system)
+
+	return new Response(null, {status: 200})
+}
+
+async function getStage(_request: Request, env: Types.Env,
+	id: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const stage = await db.get("stage") as string
+	if (!stage) {
+		return Response.json({
+			stage: "wait",
+		})
+	}
+
+	return Response.json({
+		stage: stage,
+	})
+}
+
+async function postStage(_request: Request, env: Types.Env,
+	id: string, stage: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const register = await db.get("data") as Types.Configuration
+	if (!register) {
+		return new Response(null, {status: 404})
+	}
+
+	await db.set("stage", stage)
 
 	return new Response(null, {status: 200})
 }
