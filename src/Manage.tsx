@@ -290,25 +290,23 @@ function Manage() {
 				</CheckboxCards.Root>
 			</Flex>
 
-			{data.provider !== "latitude" && (<>
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="network-config">
-						Network Configuration
-					</Text>
-					<Select.Root
-						value={networkMode}
-						onValueChange={setNetworkMode}
-					>
-						<Select.Trigger id="network-config"/>
-						<Select.Content>
-							<Select.Item value="static">Static</Select.Item>
-							<Select.Item value="dhcp">DHCP</Select.Item>
-						</Select.Content>
-					</Select.Root>
-				</Flex>
-			</>)}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="network-config">
+					Network Configuration
+				</Text>
+				<Select.Root
+					value={networkMode}
+					onValueChange={setNetworkMode}
+				>
+					<Select.Trigger id="network-config"/>
+					<Select.Content>
+						<Select.Item value="static">Static</Select.Item>
+						<Select.Item value="dhcp">DHCP</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</Flex>
 
-			{data.provider !== "latitude" && networkMode === "static" && (<>
+			{networkMode === "static" && (<>
 				<Flex gap="2">
 					<Switch
 						id="bonded-network"
@@ -321,7 +319,7 @@ function Manage() {
 				</Flex>
 			</>)}
 
-			{networkMode === "static" && data.provider !== "latitude" && (<>
+			{networkMode === "static" && (<>
 				<Flex direction="column" gap="1">
 					<Text as="label" htmlFor="public-ip">
 						Public IPv4
@@ -360,7 +358,7 @@ function Manage() {
 				</Flex>
 			</>)}
 
-			{networkMode === "static" && data.provider !== "latitude" && (<>
+			{networkMode === "static" && (<>
 				<Flex direction="column" gap="1">
 					<Text as="label" htmlFor="public-ip6">
 						Public IPv6
