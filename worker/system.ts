@@ -43,8 +43,13 @@ export function generateKickstartNetwork(data: Types.Configuration): string {
 
 	if (data.bonded_network && data.interfaces && data.interfaces.length >= 2) {
 		rootIface = "bond0"
+        let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
+        if (data.mtu) {
+            bondOpts += `,mtu=${data.mtu}`
+        }
+
 		conf += `
-nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4`
+nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
 		data.interfaces.forEach((iface: string, index: number) => {
 			conf += `
 nmcli connection add type bond-slave con-name bond0-slave${index} ifname ${iface} master bond0`
@@ -88,7 +93,7 @@ nmcli connection modify ${rootIface} ipv4.method disabled`
 nmcli connection modify ${rootIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
 				if (data.gateway_ip6) {
 					conf += `
-	nmcli connection modify ${rootIface} ipv6.gateway ${data.gateway_ip6}`
+nmcli connection modify ${rootIface} ipv6.gateway ${data.gateway_ip6}`
 				}
 			} else {
 				conf += `
@@ -112,7 +117,7 @@ nmcli connection add type vlan con-name ${vlanIface} ifname ${vlanIface} dev ${r
 
 		if (data.mtu) {
 			conf += `
-nmcli connection modify ${vlanIface} 802-3-ethernet.mtu ${data.mtu}`
+nmcli connection modify ${vlanIface} mtu ${data.mtu}`
 		}
 
 		if (data.network_mode === "static") {
@@ -129,7 +134,7 @@ nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
 nmcli connection modify ${vlanIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
 				if (data.gateway_ip6) {
 					conf += `
-	nmcli connection modify ${vlanIface} ipv6.gateway ${data.gateway_ip6}`
+nmcli connection modify ${vlanIface} ipv6.gateway ${data.gateway_ip6}`
 				}
 			} else {
 				conf += `
@@ -152,7 +157,7 @@ nmcli connection add type vlan con-name ${vlanIface6} ifname ${vlanIface6} dev $
 
 		if (data.mtu) {
 			conf += `
-nmcli connection modify ${vlanIface6} 802-3-ethernet.mtu ${data.mtu}`
+nmcli connection modify ${vlanIface6} mtu ${data.mtu}`
 		}
 
 		if (data.network_mode === "static" && data.public_ip6) {
@@ -168,8 +173,7 @@ nmcli connection modify ${vlanIface6} ipv6.method auto`
 		}
 
 		conf += `
-nmcli connection up ${vlanIface6}
-`
+nmcli connection up ${vlanIface6}`
 	}
 
 	return conf
@@ -177,23 +181,31 @@ nmcli connection up ${vlanIface6}
 
 export function generateKickstart(data: Types.Configuration): string {
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
-	const publicIp = Utils.cidrToIp(data.public_ip)
+	let publicMacFunc = ""
+	if (data.network_mode === "static") {
+		const publicIp = Utils.cidrToIp(data.public_ip)
+		publicMacFunc = `get_mac_from_ip "${publicIp}"`
+	} else {
+		publicMacFunc = `get_active_mac`
+	}
 
-    let rootSize = ""
-    if (!data.root_size || data.root_size === "") {
-        rootSize = "--size=2"
-    } else {
-        const match = data.root_size.match(/^(\d+)GB$/i)
-        if (match) {
-            let gb = parseInt(match[1])
-            if (gb < 2) {
-                gb = 2
-            }
-            rootSize = `--maxsize=${gb * 1024}`
-        } else {
-            rootSize = "--size=2"
-        }
-    }
+    const networkScript = generateKickstartNetwork(data)
+
+	let rootSize = ""
+	if (!data.root_size || data.root_size === "") {
+		rootSize = "--size=2"
+	} else {
+		const match = data.root_size.match(/^(\d+)GB$/i)
+		if (match) {
+			let gb = parseInt(match[1])
+			if (gb < 2) {
+				gb = 2
+			}
+			rootSize = `--maxsize=${gb * 1024}`
+		} else {
+			rootSize = "--size=2"
+		}
+	}
 
 	return `text
 reboot
@@ -376,7 +388,41 @@ get_mac_from_ip() {
     echo "$mac"
 }
 
-PUBLIC_MAC_ADDR=$(get_mac_from_ip "${publicIp}")
+get_active_mac() {
+    local interface
+    local mac
+    interface=$(ip route show default | head -1 | grep -oP 'dev \\K\\w+')
+
+    if [ -n "$interface" ]; then
+        if ip link show "$interface" | grep -q "state UP"; then
+            mac=$(ip link show "$interface" | awk '/link\\/ether/ {print $2}')
+            if [ -n "$mac" ]; then
+                echo "$mac"
+                return 0
+            fi
+        fi
+    fi
+
+    interface=$(ip -br addr show | awk '
+        $2 == "UP" && $3 != "" && $1 !~ /^lo/ {
+            print $1
+            exit
+        }
+    ')
+
+    if [ -n "$interface" ]; then
+        mac=$(ip link show "$interface" | awk '/link\\/ether/ {print $2}')
+        if [ -n "$mac" ]; then
+            echo "$mac"
+            return 0
+        fi
+    fi
+
+    echo "No active network interface found" >&2
+    return 1
+}
+
+PUBLIC_MAC_ADDR=$(${publicMacFunc})
 
 tee /etc/systemd/system/network-migration.service << EOF
 [Unit]
@@ -432,105 +478,7 @@ nmcli -g UUID connection show | while read connid; do
 done
 
 sleep 1
-
-if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ] && [ -n "\\$VLAN_ID6" ] && [ "\\$VLAN_ID6" != "0" ]; then
-    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" ipv4.method disabled ipv6.method ignore connection.autoconnect yes
-
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
-    fi
-
-    nmcli connection up "\\$INTERFACE"
-else
-    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" connection.autoconnect yes
-
-    if [ -z "\\$VLAN_ID" ] || [ "\\$VLAN_ID" = "0" ]; then
-        if [ "\\$NET_MODE" = "static" ]; then
-            nmcli connection modify "\\$INTERFACE" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
-        else
-            nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
-        fi
-    fi
-
-    if [ -z "\\$VLAN_ID6" ] || [ "\\$VLAN_ID6" = "0" ]; then
-        if [ -n "\\$PUBLIC_IP6" ]; then
-            nmcli connection modify "\\$INTERFACE" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
-        fi
-        if [ -n "\\$GATEWAY_IP6" ]; then
-            nmcli connection modify "\\$INTERFACE" ipv6.gateway "\\$GATEWAY_IP6"
-        fi
-    fi
-
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
-    fi
-
-    nmcli connection up "\\$INTERFACE"
-fi
-
-sleep 1
-
-if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ] && [ "\\$VLAN_ID" = "\\$VLAN_ID6" ]; then
-    VLAN_CON_NAME="\\\${INTERFACE}.\\\${VLAN_ID}"
-
-    nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" connection.autoconnect yes
-
-    if [ "\\$NET_MODE" = "static" ]; then
-        nmcli connection modify "\\$VLAN_CON_NAME" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
-    else
-        nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
-    fi
-
-    if [ -n "\\$PUBLIC_IP6" ]; then
-        nmcli connection modify "\\$VLAN_CON_NAME" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
-    fi
-    if [ -n "\\$GATEWAY_IP6" ]; then
-        nmcli connection modify "\\$VLAN_CON_NAME" ipv6.gateway "\\$GATEWAY_IP6"
-    fi
-
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$VLAN_CON_NAME" 802.mtu "\\$MTU"
-    fi
-
-    nmcli connection up "\\$VLAN_CON_NAME"
-else
-    if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ]; then
-        VLAN_CON_NAME="\\$INTERFACE.\\$VLAN_ID"
-
-        nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" connection.autoconnect yes
-
-        if [ "\\$NET_MODE" = "static" ]; then
-            nmcli connection modify "\\$VLAN_CON_NAME" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4"
-        else
-            nmcli connection modify "\\$INTERFACE" ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
-        fi
-
-        if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-            nmcli connection modify "\\$VLAN_CON_NAME" 802.mtu "\\$MTU"
-        fi
-
-        nmcli connection up "\\$VLAN_CON_NAME"
-    fi
-
-    if [ -n "\\$VLAN_ID6" ] && [ "\\$VLAN_ID6" != "0" ]; then
-        VLAN_CON_NAME6="\\$INTERFACE.\\$VLAN_ID6"
-
-        nmcli connection add type ethernet con-name "\\$VLAN_CON_NAME6" ifname "\\$VLAN_CON_NAME6" dev "\\$INTERFACE" id "\\$VLAN_ID6" connection.autoconnect yes
-
-        if [ -n "\\$PUBLIC_IP6" ]; then
-            nmcli connection modify "\\$VLAN_CON_NAME6" ipv6.method manual ipv6.addresses "\\$PUBLIC_IP6"
-        fi
-        if [ -n "\\$GATEWAY_IP6" ]; then
-            nmcli connection modify "\\$VLAN_CON_NAME6" ipv6.gateway "\\$GATEWAY_IP6"
-        fi
-
-        if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-            nmcli connection modify "\\$VLAN_CON_NAME6" 802.mtu "\\$MTU"
-        fi
-
-        nmcli connection up "\\$VLAN_CON_NAME6"
-    fi
-fi
+${networkScript}
 
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
@@ -616,7 +564,9 @@ rootpw --plaintext cloud
 
 echo "=== Scanning for install disks ==="
 
-DISKS=()
+POST_DATA="kernel=$(uname -r)"
+
+disk_index=0
 for disk in /sys/block/sd* /sys/block/nvme*n1 /sys/block/vd*; do
     if [ ! -e "$disk" ]; then
         continue
@@ -634,25 +584,115 @@ for disk in /sys/block/sd* /sys/block/nvme*n1 /sys/block/vd*; do
         continue
     fi
 
-    if [ $size -lt 67108864 ]; then
+    if [ $size -lt 33554432 ]; then
         echo "Ignoring $diskname too small"
         continue
     fi
 
-    if [ -f "/sys/block/$diskname/removable" ]; then
-        removable=$(cat /sys/block/$diskname/removable)
-    else
-        removable=0
-    fi
+    size_megabytes=$(((size * 512) / 1024 / 1024))
+    model=$(
+        cat $disk/device/model 2>/dev/null |
+        sed 's/[[:space:]]*$//; s/[^a-zA-Z0-9_ ()-]//g' ||
+        echo ""
+    )
+    serial=$(
+        cat $disk/device/serial 2>/dev/null |
+        sed 's/[[:space:]]*$//; s/[^a-zA-Z0-9_ ()-]//g' ||
+        echo ""
+    )
 
-    if [ "$removable" = "1" ]; then
-        echo "Ignoring $diskname removable media"
-        continue
-    fi
-
-    echo "Detected disk $diskname ($(($size * 512 / 1073741824))GB)"
-    DISKS+=($diskname)
+    POST_DATA+="&disk$disk_index.path=/dev/$diskname"
+    POST_DATA+="&disk$disk_index.size=$size_megabytes"
+    POST_DATA+="&disk$disk_index.model=$model"
+    POST_DATA+="&disk$disk_index.serial=$serial"
+    disk_index=$((disk_index + 1))
 done
+
+echo "=== Scanning Network Interfaces ==="
+
+lspci_output=$(lspci -D)
+net_index=0
+for iface in /sys/class/net/*; do
+    [ -e "$iface" ] || continue
+
+    ifacename=$(basename $iface)
+
+    [ "$ifacename" = "lo" ] && continue
+
+    mac=$(cat $iface/address 2>/dev/null || echo "")
+    iface_ip=$(
+        ip -4 addr show $ifacename 2>/dev/null |
+        grep inet | head -1 | awk '{print $2}' |
+        cut -d'/' -f1 || echo ""
+    )
+    carrier=$(cat $iface/carrier 2>/dev/null || echo 0)
+
+    model=""
+    if [ -e "$iface/device/uevent" ]; then
+        pci_slot=$(
+            readlink -f $iface/device 2>/dev/null |
+            grep -o '[0-9a-f]*:[0-9a-f]*:[0-9a-f]*\.[0-9a-f]*$'
+        )
+        if [ -n "$pci_slot" ]; then
+            model=$(
+                echo "$lspci_output" | grep "^$pci_slot" |
+                sed 's/^[^:]*:[^:]*:[^:]*: //' |
+                sed 's/[[:space:]]*$//; s/[^a-zA-Z0-9_ ()-]//g'
+            )
+            [ -z "$model" ] && model=""
+        fi
+    fi
+
+    POST_DATA+="&net$net_index.mac=$mac"
+    POST_DATA+="&net$net_index.ip=$iface_ip"
+    POST_DATA+="&net$net_index.model=$model"
+    net_index=$((net_index + 1))
+done
+
+echo "=== Sending system state ==="
+
+curl -v -X POST --data "$POST_DATA" "https://boot.pritunl.com/${data.id}/system"
+
+poll_disk_decode() {
+    local url="https://boot.pritunl.com/${data.id}/disk"
+    local max_wait=600
+    local response_file=$(mktemp)
+
+    echo "=== Waiting for disk configuration ===" >&2
+
+    local count=0
+    while [ $count -lt $max_wait ]; do
+        count=$((count + 1))
+
+        if curl -s -o "$response_file" -w "%{http_code}" "$url" | grep -q "200"; then
+            local response=$(cat "$response_file")
+            rm -f "$response_file"
+
+            if [ -n "$response" ]; then
+                # Try to decode (assume it's base64)
+                echo "$response" | base64 -d 2>/dev/null
+                return $?
+            fi
+        fi
+
+        if [ $((count % 30)) -eq 0 ]; then
+            echo "Waiting for configuration..." >&2
+        fi
+
+        sleep 3
+    done
+
+    rm -f "$response_file"
+    echo "Timeout waiting for configuration" >&2
+    return 1
+}
+
+DISKS_STR=$(poll_disk_decode)
+if [ $? -ne 0 ] || [ -z "$DISKS_STR" ]; then
+    echo "Failed to get disk configuration" >&2
+    exit 1
+fi
+IFS=',' read -ra DISKS <<< "$DISKS_STR"
 
 echo "=== Destroying existing raid arrays ==="
 for md in /dev/md*; do
@@ -752,22 +792,41 @@ echo "=== Running post setup ==="
 
 grubby --update-kernel=ALL --remove-args="crashkernel net.ifnames biosdevname"
 
-get_mac_from_ip() {
-    local ip="$1"
-    interface=$(ip -br addr show | grep "$ip" | awk '{print $1}')
-    if [ -z "$interface" ]; then
-        echo "No interface found with IP $ip"
-        return 1
-    fi
-    mac=$(ip link show "$interface" | grep -oP 'link/ether \\K[0-9a-f:]+')
-    if [ -z "$mac" ]; then
-        echo "Could not find MAC address for interface $interface"
-        return 1
-    fi
-    echo "$mac"
+poll_network_decode() {
+    local url="https://boot.pritunl.com/${data.id}/network"
+    local max_wait=10
+    local response_file=$(mktemp)
+
+    echo "=== Waiting for network configuration ===" >&2
+
+    local count=0
+    while [ $count -lt $max_wait ]; do
+        count=$((count + 1))
+
+        if curl -s -o "$response_file" -w "%{http_code}" "$url" | grep -q "200"; then
+            local response=$(cat "$response_file")
+            rm -f "$response_file"
+
+            if [ -n "$response" ]; then
+                # Try to decode (assume it's base64)
+                echo "$response" | base64 -d 2>/dev/null
+                return $?
+            fi
+        fi
+
+        sleep 3
+    done
+
+    rm -f "$response_file"
+    echo "Timeout waiting for configuration" >&2
+    return 1
 }
 
-PUBLIC_MAC_ADDR=$(get_mac_from_ip "${"TODO"}")
+NETWORK_CONFIG=$(poll_network_decode)
+if [ $? -ne 0 ] || [ -z "$NETWORK_CONFIG" ]; then
+    echo "Failed to get network configuration" >&2
+    exit 1
+fi
 
 tee /etc/systemd/system/network-migration.service << EOF
 [Unit]
@@ -789,28 +848,6 @@ EOF
 tee /usr/local/bin/network-migration.sh << EOF
 #!/bin/bash
 set -x
-MAC_ADDR="$PUBLIC_MAC_ADDR"
-PUBLIC_IP="${data.public_ip}"
-GATEWAY_IP="${data.gateway_ip}"
-VLAN_ID="${data.vlan}"
-MTU="${data.mtu}"
-
-get_iface_from_mac() {
-    local mac="\\$1"
-    mac=\\$(echo "\\$mac" | tr '[:upper:]' '[:lower:]')
-    interface=\\$(ip -br link show | grep -i "\\$mac" | awk '{print \\$1}')
-    if [ -z "\\$interface" ]; then
-        echo "No interface found with MAC \\$mac"
-        return 1
-    fi
-    echo "\\$interface"
-}
-
-INTERFACE=\\$(get_iface_from_mac "\\$MAC_ADDR")
-if [ \\$? -ne 0 ] || [ -z "\\$INTERFACE" ]; then
-    echo "Failed to find interface with MAC \\$MAC_ADDR"
-    exit 1
-fi
 
 nmcli general hostname cloud
 
@@ -819,32 +856,7 @@ nmcli -g UUID connection show | while read connid; do
 done
 
 sleep 1
-
-if [ -n "\\$VLAN_ID" ] && [ "\\$VLAN_ID" != "0" ]; then
-    VLAN_CON_NAME="\\\${INTERFACE}.\\\${VLAN_ID}"
-
-    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" ipv4.method disabled ipv6.method ignore connection.autoconnect yes
-
-    nmcli connection up "\\$INTERFACE"
-
-    sleep 1
-
-    nmcli connection add type vlan con-name "\\$VLAN_CON_NAME" ifname "\\$VLAN_CON_NAME" dev "\\$INTERFACE" id "\\$VLAN_ID" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4" connection.autoconnect yes
-
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$VLAN_CON_NAME" 802.mtu "\\$MTU"
-    fi
-
-    nmcli connection up "\\$VLAN_CON_NAME"
-else
-    nmcli connection add type ethernet con-name "\\$INTERFACE" ifname "\\$INTERFACE" ipv4.method manual ipv4.addresses "\\$PUBLIC_IP" ipv4.gateway "\\$GATEWAY_IP" ipv4.dns "8.8.8.8,8.8.4.4" connection.autoconnect yes
-
-    if [ -n "\\$MTU" ] && [ "\\$MTU" != "0" ]; then
-        nmcli connection modify "\\$INTERFACE" 802-3-ethernet.mtu "\\$MTU"
-    fi
-
-    nmcli connection up "\\$INTERFACE"
-fi
+$NETWORK_CONFIG
 
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
