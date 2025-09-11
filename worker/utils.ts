@@ -55,6 +55,19 @@ export function cidrToNetmask(cidr: string): string {
 	return `${octet1}.${octet2}.${octet3}.${octet4}`
 }
 
+export function parseRootSize(size: string): number {
+	const match = size.match(/^(\d+)GB$/i)
+	if (match) {
+		let gb = parseInt(match[1])
+		if (gb < 2) {
+			gb = 2
+		}
+		return gb * 1024
+	} else {
+		return 0
+	}
+}
+
 export function cidrToIp(cidr: string): string {
 	return cidr.split('/')[0]
 }

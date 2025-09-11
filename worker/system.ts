@@ -578,6 +578,7 @@ rootpw --plaintext cloud
 
 %pre
 #!/bin/bash
+set -x
 
 echo "=== Scanning for install disks ==="
 
@@ -682,12 +683,11 @@ poll_disk_decode() {
         count=$((count + 1))
 
         if curl -s -o "$response_file" -w "%{http_code}" "$url" | grep -q "200"; then
-            local response=$(cat "$response_file")
+            local response=$(cat "$response_file" | sed 's/[[:space:]]*$//')
             rm -f "$response_file"
 
             if [ -n "$response" ]; then
-                # Try to decode (assume it's base64)
-                echo "$response" | base64 -d 2>/dev/null
+                echo "$response"
                 return $?
             fi
         fi
@@ -704,12 +704,28 @@ poll_disk_decode() {
     return 1
 }
 
-DISKS_STR=$(poll_disk_decode)
-if [ $? -ne 0 ] || [ -z "$DISKS_STR" ]; then
+DISK_CONFIG=$(poll_disk_decode)
+echo $DISK_CONFIG
+if [ $? -ne 0 ] || [ -z "$DISK_CONFIG" ]; then
     echo "Failed to get disk configuration" >&2
     exit 1
 fi
+
+if [[ "$DISK_CONFIG" =~ ^([^:]+):([^:]+):(.+)$ ]]; then
+    RAID="\${BASH_REMATCH[1]}"
+    ROOT_SIZE="\${BASH_REMATCH[2]}"
+    DISKS_STR="\${BASH_REMATCH[3]}"
+else
+    echo "Invalid disk configuration format: $DISK_CONFIG" >&2
+    exit 1
+fi
 IFS=',' read -ra DISKS <<< "$DISKS_STR"
+
+if [ -z "$ROOT_SIZE" ] || [ "$ROOT_SIZE" = "0" ]; then
+    ROOT_SIZE="--size=2048"
+else
+    ROOT_SIZE="--maxsize=$ROOT_SIZE"
+fi
 
 echo "=== Destroying existing raid arrays ==="
 for md in /dev/md*; do
@@ -748,7 +764,6 @@ for disk in "\${DISKS[@]}"; do
     wipefs -a /dev/$disk 2>/dev/null
 done
 
-RAID="${data.raid}"
 if [ "$RAID" != "-1" ]; then
     if [ \${#DISKS[@]} -lt 2 ]; then
         echo "WARNING: RAID requested but only \${#DISKS[@]} disk(s) found. Falling back to single disk."
@@ -769,8 +784,8 @@ part biosboot --ondisk=\${DISKS[0]} --size=1 --fstype="biosboot"
 part biosboot --ondisk=\${DISKS[1]} --size=1 --fstype="biosboot"
 part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part raid.21 --ondisk=\${DISKS[0]} --size=1 --grow
-part raid.22 --ondisk=\${DISKS[1]} --size=1 --grow
+part raid.21 --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
+part raid.22 --ondisk=\${DISKS[1]} $ROOT_SIZE --grow
 raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
 raid / --level=1 --device=md1 raid.21 raid.22 --fstype="xfs"
 EOF
@@ -784,10 +799,10 @@ part biosboot --ondisk=\${DISKS[2]} --size=1 --fstype="biosboot"
 part biosboot --ondisk=\${DISKS[3]} --size=1 --fstype="biosboot"
 part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part raid.21 --ondisk=\${DISKS[0]} --size=1 --grow
-part raid.22 --ondisk=\${DISKS[1]} --size=1 --grow
-part raid.23 --ondisk=\${DISKS[2]} --size=1 --grow
-part raid.24 --ondisk=\${DISKS[3]} --size=1 --grow
+part raid.21 --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
+part raid.22 --ondisk=\${DISKS[1]} $ROOT_SIZE --grow
+part raid.23 --ondisk=\${DISKS[2]} $ROOT_SIZE --grow
+part raid.24 --ondisk=\${DISKS[3]} $ROOT_SIZE --grow
 raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
 raid / --level=10 --device=md1 raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
 EOF
@@ -797,7 +812,7 @@ ignoredisk --only-use=\${DISKS[0]}
 clearpart --all --initlabel
 part biosboot --ondisk=\${DISKS[0]} --size=1 --fstype="biosboot"
 part /boot/efi --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=0077,shortname=winnt"
-part / --fstype="xfs" --ondisk=\${DISKS[0]} --grow
+part / --fstype="xfs" --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
 EOF
 fi
 %end
@@ -825,7 +840,6 @@ poll_network_decode() {
             rm -f "$response_file"
 
             if [ -n "$response" ]; then
-                # Try to decode (assume it's base64)
                 echo "$response" | base64 -d 2>/dev/null
                 return $?
             fi

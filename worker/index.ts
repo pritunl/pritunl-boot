@@ -134,9 +134,10 @@ async function getDisks(_request: Request, env: Types.Env,
 		return new Response(null, {status: 202})
 	}
 
-	const disksData = Utils.encodeBase64(data.disks.join(","))
+	const rootSize = Utils.parseRootSize(data.root_size)
+
 	return new Response(
-		disksData,
+		 `${data.raid}:${rootSize}:` + data.disks.join(","),
 		{headers: {"Content-Type": "text/plain"},
 	})
 }
