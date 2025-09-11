@@ -147,7 +147,7 @@ function Manage() {
 					}
 				}
 			}
-		}, 1000, true)
+		}, 3000, true)
 
 		systemSync?.stop()
 		systemSync = new Utils.SyncInterval(async () => {
@@ -171,7 +171,7 @@ function Manage() {
 					systemSync?.stop()
 				}
 			}
-		}, 1000, true)
+		}, 3000, true)
 	}, [bootId])
 
 	let diskElms: React.ReactNode[] = []
