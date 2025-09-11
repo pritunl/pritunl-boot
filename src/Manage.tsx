@@ -46,6 +46,7 @@ export interface System {
 }
 
 export interface Disk {
+	name: string
 	path: string
 	size: number
 	model: string
@@ -98,12 +99,13 @@ function Manage() {
 					if (resp.status === 400) {
 						const errorData = await resp.json() as Error
 						setErrorMsg(errorData.error || "Unknown error")
-					}
-					try {
-						const respText = await resp.text()
-						setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-					} catch {
-						setErrorMsg(`Unknown error: ${resp.status}`)
+					} else {
+						try {
+							const respText = await resp.text()
+							setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+						} catch {
+							setErrorMsg(`Unknown error: ${resp.status}`)
+						}
 					}
 				} else {
 					const bootData = await resp.json() as Data
@@ -122,12 +124,13 @@ function Manage() {
 				if (resp.status === 400) {
 					const errorData = await resp.json() as Error
 					setErrorMsg(errorData.error || "Unknown error")
-				}
-				try {
-					const respText = await resp.text()
-					setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-				} catch {
-					setErrorMsg(`Unknown error: ${resp.status}`)
+				} else {
+					try {
+						const respText = await resp.text()
+						setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+					} catch {
+						setErrorMsg(`Unknown error: ${resp.status}`)
+					}
 				}
 			} else {
 				const systemData = await resp.json() as System
@@ -143,7 +146,7 @@ function Manage() {
 	system?.disks?.forEach((disk: Disk) => {
 		diskElms.push(
 			<CheckboxCards.Item
-				value={disk.path}
+				value={disk.name}
 			>
 				<Flex direction="column" width="100%">
 					<Text weight="bold">{disk.path}</Text>
@@ -446,12 +449,13 @@ function Manage() {
 									error: string
 								}
 								setErrorMsg(errorData.error || "Unknown error")
-							}
-							try {
-								const respText = await resp.text()
-								setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-							} catch {
-								setErrorMsg(`Unknown error: ${resp.status}`)
+							} else {
+								try {
+									const respText = await resp.text()
+									setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+								} catch {
+									setErrorMsg(`Unknown error: ${resp.status}`)
+								}
 							}
 						} else {
 							// TODO Clear install options prompt

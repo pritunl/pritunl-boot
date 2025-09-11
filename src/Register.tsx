@@ -319,12 +319,13 @@ function Register() {
 											error: string
 										}
 										setErrorMsg(errorData.error || "Unknown error")
-									}
-									try {
-										const respText = await resp.text()
-										setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-									} catch {
-										setErrorMsg(`Unknown error: ${resp.status}`)
+									} else {
+										try {
+											const respText = await resp.text()
+											setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+										} catch {
+											setErrorMsg(`Unknown error: ${resp.status}`)
+										}
 									}
 								} else {
 									const data = await resp.json() as {
