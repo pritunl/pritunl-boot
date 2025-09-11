@@ -277,6 +277,8 @@ rootpw --plaintext cloud
 %pre
 #!/bin/bash
 
+curl -X POST https://boot.pritunl.com/${data.id}/stage/pre || true
+
 echo "=== Scanning for install disks ==="
 
 DISKS=()
@@ -406,12 +408,16 @@ part /boot/efi --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umas
 part / --fstype="xfs" --ondisk=\${DISKS[0]} ${rootSize} --grow
 EOF
 fi
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/install || true
 %end
 
 %post --log=/root/ks-post.log
 #!/bin/bash
 set -x
 echo "=== Running post setup ==="
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/post || true
 
 grubby --update-kernel=ALL --remove-args="crashkernel net.ifnames biosdevname"
 
@@ -497,10 +503,14 @@ VLAN_ID6="${data.vlan6}"
 MTU="${data.mtu}"
 ${networkScript}
 
+sleep 5
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/complete || true
+
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
-#rm -f /etc/systemd/system/network-migration.service
-#rm -f /usr/local/bin/network-migration.sh
+rm -f /etc/systemd/system/network-migration.service
+rm -f /usr/local/bin/network-migration.sh
 EOF
 
 chmod +x /usr/local/bin/network-migration.sh
@@ -518,8 +528,8 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-#passwd -d root
-#passwd -l root
+passwd -d root
+passwd -l root
 passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
@@ -711,6 +721,8 @@ if [ $? -ne 0 ] || [ -z "$DISK_CONFIG" ]; then
     exit 1
 fi
 
+curl -X POST https://boot.pritunl.com/${data.id}/stage/pre || true
+
 if [[ "$DISK_CONFIG" =~ ^([^:]+):([^:]+):(.+)$ ]]; then
     RAID="\${BASH_REMATCH[1]}"
     ROOT_SIZE="\${BASH_REMATCH[2]}"
@@ -815,12 +827,16 @@ part /boot/efi --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umas
 part / --fstype="xfs" --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
 EOF
 fi
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/install || true
 %end
 
 %post --log=/root/ks-post.log
 #!/bin/bash
 set -x
 echo "=== Running post setup ==="
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/post || true
 
 grubby --update-kernel=ALL --remove-args="crashkernel net.ifnames biosdevname"
 
@@ -881,10 +897,14 @@ tee /usr/local/bin/network-migration.sh << EOF
 set -x
 $NETWORK_CONFIG
 
+sleep 5
+
+curl -X POST https://boot.pritunl.com/${data.id}/stage/complete || true
+
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
-#rm -f /etc/systemd/system/network-migration.service
-#rm -f /usr/local/bin/network-migration.sh
+rm -f /etc/systemd/system/network-migration.service
+rm -f /usr/local/bin/network-migration.sh
 EOF
 
 chmod +x /usr/local/bin/network-migration.sh
@@ -902,8 +922,8 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-#passwd -d root
-#passwd -l root
+passwd -d root
+passwd -l root
 passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
