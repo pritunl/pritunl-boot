@@ -13,6 +13,11 @@
 			"/*/install",
 			"/*/disks",
 			"/*/network",
+			"/*/stage",
+			"/*/stage/pre",
+			"/*/stage/install",
+			"/*/stage/post",
+			"/*/stage/complete",
 			"/register"
 		]
 	},
