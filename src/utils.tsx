@@ -4,13 +4,15 @@ export class SyncInterval {
 	private readonly interval: number;
 	private readonly action: () => Promise<any>;
 
-	constructor(action: () => Promise<any>, interval: number) {
+	constructor(action: () => Promise<any>, interval: number,
+		instant: boolean = false) {
+
 		this.action = action;
 		this.interval = interval;
-		this.start();
+		this.start(instant);
 	}
 
-	public start = async (): Promise<void> => {
+	public start = async (instant: boolean = false): Promise<void> => {
 		if (this.timer !== null) {
 			clearTimeout(this.timer);
 			this.timer = null;
@@ -41,7 +43,7 @@ export class SyncInterval {
 
 		this.timer = window.setTimeout(() => {
 			runSync();
-		}, this.interval);
+		}, instant ? 0 : this.interval);
 	};
 
 	public stop = (): void => {
