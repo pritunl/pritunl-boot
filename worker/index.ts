@@ -40,12 +40,33 @@ export default {
 					if (match && match[1]) {
 						return getSystem(request, env, match[1])
 					}
+				} else if (url.pathname.endsWith("/install") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/install$/)
+					if (match && match[1]) {
+						return postInstall(request, env, match[1])
+					}
 				} else if (url.pathname.endsWith("/data") &&
 					request.method == "GET") {
 
 					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/data$/)
 					if (match && match[1]) {
 						return getData(request, env, match[1])
+					}
+				} else if (url.pathname.endsWith("/disks") &&
+					request.method == "GET") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/disks$/)
+					if (match && match[1]) {
+						return getDisks(request, env, match[1])
+					}
+				} else if (url.pathname.endsWith("/network") &&
+					request.method == "GET") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/network$/)
+					if (match && match[1]) {
+						return getNetwork(request, env, match[1])
 					}
 				}
 
@@ -100,6 +121,42 @@ async function getData(_request: Request,
 	return Response.json({
 		...data,
 		ipxe: ipxeConf,
+	})
+}
+
+async function getDisks(_request: Request, env: Types.Env,
+	id: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const data = await db.get("data") as Types.Configuration
+	if (!data || !data.disks?.length) {
+		return new Response(null, {status: 202})
+	}
+
+	const disksData = Utils.encodeBase64(data.disks.join(","))
+	return new Response(
+		disksData,
+		{headers: {"Content-Type": "text/plain"},
+	})
+}
+
+async function getNetwork(_request: Request, env: Types.Env,
+	id: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const data = await db.get("data") as Types.Configuration
+	if (!data || !data.interfaces?.length) {
+		return new Response(null, {status: 202})
+	}
+
+	const networkConf = System.generateKickstartNetwork(data, false)
+
+	let networkData = Utils.encodeBase64(networkConf)
+	return new Response(
+		networkData,
+		{headers: {"Content-Type": "text/plain"},
 	})
 }
 
@@ -161,6 +218,51 @@ async function getSystem(_request: Request, env: Types.Env,
 	})
 }
 
+async function postInstall(request: Request,
+	env: Types.Env, id: string): Promise<Response> {
+
+	let payload = await request.json() as Types.Configuration
+	let data: Types.Configuration
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	const register = await db.get("data") as Types.Configuration
+	if (!register) {
+		return new Response(null, {status: 404})
+	}
+
+	register.network_mode = payload.network_mode
+	register.bonded_network = payload.bonded_network
+	register.public_ip = payload.public_ip
+	register.gateway_ip = payload.gateway_ip
+	register.public_ip6 = payload.public_ip6
+	register.gateway_ip6 = payload.gateway_ip6
+	register.vlan = payload.vlan
+	register.vlan6 = payload.vlan6
+	register.mtu = payload.mtu
+	register.root_size = payload.root_size
+	register.raid = payload.raid
+	register.disks = payload.disks
+	register.interfaces = payload.interfaces
+
+	try {
+		data = Validation.validateConfiguration(register, true)
+	} catch (error) {
+		if (error instanceof Types.ValidationError) {
+			return Response.json({error: error.message}, {status: 400})
+		} else {
+			throw error
+		}
+	}
+
+	data.id = register.id
+	await db.set("data", data)
+
+	return Response.json({
+		id: data.id,
+	})
+}
+
 async function postSystem(request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
@@ -183,6 +285,7 @@ async function postSystem(request: Request, env: Types.Env,
 
 	for (const index of Array.from(diskIndices).sort((a, b) => a - b)) {
 		const disk: Types.Disk = {
+			name: Utils.basename(data[`disk${index}.path`] || ""),
 			path: data[`disk${index}.path`] || "",
 			size: parseInt(data[`disk${index}.size`] || "0"),
 			model: data[`disk${index}.model`] || "",
