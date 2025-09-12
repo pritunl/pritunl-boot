@@ -2,6 +2,16 @@ const idChars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 const idCharsLen = idChars.length
 const safeCharsRe = /[A-Za-z0-9+/=\s\t@.#_-]/g;
 
+export async function sha256(data: string): Promise<string> {
+	const encoder = new TextEncoder()
+	const data_bytes = encoder.encode(data)
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data_bytes)
+	const hashArray = new Uint8Array(hashBuffer)
+	return Array.from(hashArray)
+		.map(b => b.toString(16).padStart(2, '0'))
+		.join('')
+}
+
 export function encodeBase64(data: string): string {
 	const encoder = new TextEncoder()
 	const encoded = encoder.encode(data)
