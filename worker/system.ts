@@ -1,3 +1,4 @@
+import * as Config from "./config"
 import * as Types from "./types"
 import * as Utils from "./utils"
 
@@ -10,7 +11,7 @@ set net{{ INTERFACE_ID }}/netmask {{ NETMASK }}
 set net{{ INTERFACE_ID }}/gateway {{ PUBLIC_GW }}
 set net{{ INTERFACE_ID }}/dns 8.8.8.8
 
-kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=http://boot.pritunl.com/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
+kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
 initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img
 boot`
 	}
@@ -21,7 +22,7 @@ boot`
 	}
 
 	return `#!ipxe
-kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=http://boot.pritunl.com/${data.id}.ks modprobe.blacklist=rndis_host${network}
+kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
 initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img
 boot`
 }
@@ -277,7 +278,7 @@ rootpw --plaintext cloud
 %pre
 #!/bin/bash
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/pre || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/pre || true
 
 echo "=== Scanning for install disks ==="
 
@@ -409,7 +410,7 @@ part / --fstype="xfs" --ondisk=\${DISKS[0]} ${rootSize} --grow
 EOF
 fi
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/install || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/install || true
 %end
 
 %post --log=/root/ks-post.log
@@ -417,7 +418,7 @@ curl -X POST https://boot.pritunl.com/${data.id}/stage/install || true
 set -x
 echo "=== Running post setup ==="
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/post || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/post || true
 
 grubby --update-kernel=ALL --remove-args="crashkernel net.ifnames biosdevname"
 
@@ -505,7 +506,7 @@ ${networkScript}
 
 sleep 5
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/complete || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/complete || true
 
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true
@@ -679,10 +680,10 @@ done
 
 echo "=== Sending system state ==="
 
-curl -v -X POST --data "$POST_DATA" "https://boot.pritunl.com/${data.id}/system"
+curl -v -X POST --data "$POST_DATA" "${Config.BaseUrl}/${data.id}/system"
 
 poll_disk_decode() {
-    local url="https://boot.pritunl.com/${data.id}/disks"
+    local url="${Config.BaseUrl}/${data.id}/disks"
     local max_wait=600
     local response_file=$(mktemp)
 
@@ -693,11 +694,11 @@ poll_disk_decode() {
         count=$((count + 1))
 
         if curl -s -o "$response_file" -w "%{http_code}" "$url" | grep -q "200"; then
-            local response=$(cat "$response_file" | sed 's/[[:space:]]*$//')
+            local response=$(cat "$response_file")
             rm -f "$response_file"
 
             if [ -n "$response" ]; then
-                echo "$response"
+                echo -n "$response"
                 return $?
             fi
         fi
@@ -715,13 +716,12 @@ poll_disk_decode() {
 }
 
 DISK_CONFIG=$(poll_disk_decode)
-echo $DISK_CONFIG
 if [ $? -ne 0 ] || [ -z "$DISK_CONFIG" ]; then
     echo "Failed to get disk configuration" >&2
     exit 1
 fi
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/pre || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/pre || true
 
 if [[ "$DISK_CONFIG" =~ ^([^:]+):([^:]+):(.+)$ ]]; then
     RAID="\${BASH_REMATCH[1]}"
@@ -828,20 +828,21 @@ part / --fstype="xfs" --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
 EOF
 fi
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/install || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/install || true
 %end
 
 %post --log=/root/ks-post.log
 #!/bin/bash
 set -x
+
 echo "=== Running post setup ==="
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/post || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/post || true
 
 grubby --update-kernel=ALL --remove-args="crashkernel net.ifnames biosdevname"
 
 poll_network_decode() {
-    local url="https://boot.pritunl.com/${data.id}/network"
+    local url="${Config.BaseUrl}/${data.id}/network"
     local max_wait=10
     local response_file=$(mktemp)
 
@@ -856,7 +857,7 @@ poll_network_decode() {
             rm -f "$response_file"
 
             if [ -n "$response" ]; then
-                echo "$response" | base64 -d 2>/dev/null
+                echo -n "$response" | base64 -d 2>/dev/null
                 return $?
             fi
         fi
@@ -899,7 +900,7 @@ $NETWORK_CONFIG
 
 sleep 5
 
-curl -X POST https://boot.pritunl.com/${data.id}/stage/complete || true
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/complete || true
 
 systemctl disable network-migration.service 2>/dev/null || true
 systemctl daemon-reload 2>/dev/null || true

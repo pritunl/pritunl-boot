@@ -1,3 +1,4 @@
+import * as Config from "./config"
 import * as Types from "./types"
 import * as Validation from "./validation"
 import * as Utils from "./utils"
@@ -167,6 +168,8 @@ async function getData(_request: Request,
 	const ipxeConf = System.generateIpxe(data)
 	return Response.json({
 		...data,
+		ipxe_url: `${Config.BaseUrlInsecure}/${data.id}.ipxe`,
+		ks_url: `${Config.BaseUrl}/${data.id}.ks`,
 		ipxe: ipxeConf,
 	})
 }

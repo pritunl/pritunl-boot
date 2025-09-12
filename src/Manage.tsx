@@ -34,6 +34,8 @@ export interface Data {
 	raid: number
 	ssh_keys: string
 	long_url_key: boolean
+	ipxe_url: string
+	ks_url: string
 	ipxe: string
 	error: string
 }
@@ -88,9 +90,6 @@ function Manage() {
 
 	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
 	const [selectedIfaces, setSelectedIfaces] = useState<string[]>([]);
-
-	let baseUrl: string
-	baseUrl = "https://boot.pritunl.com"
 
 	useEffect(() => {
 		if (!bootId) {
@@ -266,9 +265,7 @@ function Manage() {
 						fontSize: "14px",
 						fontFamily: "Roboto Mono",
 					}}
-					value={
-						`${baseUrl}/${bootId}.ipxe`
-					}
+					value={data?.ipxe_url || ""}
 				/>
 			</Flex>
 
@@ -296,9 +293,7 @@ function Manage() {
 						fontSize: "14px",
 						fontFamily: "Roboto Mono",
 					}}
-					value={
-						`${baseUrl}/${bootId}.ks`
-					}
+					value={data?.ks_url || ""}
 				/>
 			</Flex>
 
