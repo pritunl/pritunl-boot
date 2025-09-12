@@ -44,6 +44,7 @@ export interface Disk {
 export interface Interface {
 	mac: string
 	ip: string
+	gateway_ip: string
 	model: string
 }
 

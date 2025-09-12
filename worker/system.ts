@@ -662,10 +662,15 @@ for iface in /sys/class/net/*; do
     mac=$(cat $iface/address 2>/dev/null || echo "")
     iface_ip=$(
         ip -4 addr show $ifacename 2>/dev/null |
-        grep inet | head -1 | awk '{print $2}' |
-        cut -d'/' -f1 || echo ""
+        grep inet | head -1 | awk '{print $2}' || echo ""
     )
     carrier=$(cat $iface/carrier 2>/dev/null || echo 0)
+
+    gateway_ip=$(
+        ip route show dev $ifacename 2>/dev/null |
+        grep '^default' | head -1 |
+        awk '{print $3}' || echo ""
+    )
 
     model=""
     if [ -e "$iface/device/uevent" ]; then
@@ -685,6 +690,7 @@ for iface in /sys/class/net/*; do
 
     POST_DATA+="&net$net_index.mac=$mac"
     POST_DATA+="&net$net_index.ip=$iface_ip"
+    POST_DATA+="&net$net_index.gateway=$gateway_ip"
     POST_DATA+="&net$net_index.model=$model"
     net_index=$((net_index + 1))
 done

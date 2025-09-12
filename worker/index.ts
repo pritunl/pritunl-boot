@@ -360,6 +360,7 @@ async function postSystem(request: Request, env: Types.Env,
 		const iface: Types.Interface = {
 			mac: data[`net${index}.mac`] || "",
 			ip: data[`net${index}.ip`] || "",
+			gateway_ip: data[`net${index}.gateway`] || "",
 			model: data[`net${index}.model`] || "",
 		}
 		interfaces.push(iface)

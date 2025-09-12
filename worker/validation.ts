@@ -203,8 +203,13 @@ export function validateSystem(data: Types.System): Types.System {
 			throw new Types.ValidationError(`Invalid MAC address at index ${index}`)
 		}
 
-		if (iface.ip && !isValidIPv4(iface.ip)) {
+		if (iface.ip && !isValidIPv4CIDR(iface.ip)) {
 			throw new Types.ValidationError(`Invalid IP address at index ${index}`)
+		}
+
+		if (iface.gateway_ip && !isValidIPv4(iface.gateway_ip)) {
+			throw new Types.ValidationError(
+				`Invalid gateway IP address at index ${index}`)
 		}
 
 		if (!iface.model || typeof iface.model !== "string") {
@@ -215,6 +220,7 @@ export function validateSystem(data: Types.System): Types.System {
 		interfaces.push({
 			mac: iface.mac,
 			ip: iface.ip,
+			gateway_ip: iface.gateway_ip,
 			model: Utils.filterString(iface.model).substring(0, 128),
 		})
 	})

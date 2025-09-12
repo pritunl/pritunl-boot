@@ -60,6 +60,7 @@ export interface Disk {
 export interface Interface {
 	mac: string
 	ip: string
+	gateway_ip: string
 	model: string
 }
 
@@ -198,7 +199,10 @@ function Manage() {
 				<Flex direction="column" width="100%">
 					<Text weight="bold">{iface.mac}</Text>
 					<Text>{iface.model}</Text>
-					<Text>{iface.ip || "-"}</Text>
+					<Text>
+						{iface.ip || "-"}
+						<Text color="gray">{" " + iface.gateway_ip || ""}</Text>
+					</Text>
 				</Flex>
 			</CheckboxCards.Item>
 		)
