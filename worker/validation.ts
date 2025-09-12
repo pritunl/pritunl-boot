@@ -4,6 +4,11 @@ import * as Utils from "./utils"
 export function validateConfiguration(
 	data: Types.Configuration, install: boolean = false): Types.Configuration {
 
+	if (!data.distro || !["almalinux10", "oraclelinux10",
+			"rockylinux10", "fedora"].includes(data.distro)) {
+		throw new Types.ValidationError("Invalid distro")
+	}
+
 	if (!data.mode || !["live", "static"].includes(data.mode)) {
 		throw new Types.ValidationError("Invalid mode")
 	}
@@ -121,6 +126,7 @@ export function validateConfiguration(
 
 	return {
 		id: "",
+		distro: data.distro,
 		mode: data.mode,
 		provider: data.provider,
 		network_mode: data.network_mode,

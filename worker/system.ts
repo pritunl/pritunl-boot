@@ -3,6 +3,21 @@ import * as Types from "./types"
 import * as Utils from "./utils"
 
 export function generateIpxe(data: Types.Configuration): string {
+	const distro = Config.Distros[data.distro]
+
+	let stage2 = ""
+	if (distro.stage2_url) {
+		stage2 = ` inst.stage2=${distro.stage2_url}`
+	}
+
+	let network = ""
+	if (data.network_mode === "static") {
+		network = ` net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}`
+	}
+
+	let kernelUrl = distro.kernel_url.replace("https:", "http:")
+	let initrdUrl = distro.initrd_url.replace("https:", "http:")
+
 	if (data.provider === "latitude") {
 		return `#!ipxe
 ifopen net{{ INTERFACE_ID }}
@@ -11,19 +26,14 @@ set net{{ INTERFACE_ID }}/netmask {{ NETMASK }}
 set net{{ INTERFACE_ID }}/gateway {{ PUBLIC_GW }}
 set net{{ INTERFACE_ID }}/dns 8.8.8.8
 
-kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
-initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img
+kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
+initrd ${initrdUrl}
 boot`
 	}
 
-	let network = ""
-	if (data.network_mode === "static") {
-		network = ` net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}`
-	}
-
 	return `#!ipxe
-kernel http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz inst.repo=https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/ inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
-initrd http://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img
+kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
+initrd ${initrdUrl}
 boot`
 }
 
@@ -223,6 +233,8 @@ nmcli connection up ${vlanIface6}`
 }
 
 export function generateKickstart(data: Types.Configuration): string {
+    const distro = Config.Distros[data.distro]
+
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	let publicMacFunc = ""
 	if (data.network_mode === "static") {
@@ -252,8 +264,7 @@ export function generateKickstart(data: Types.Configuration): string {
 
 	return `text
 reboot
-url --url="https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/"
-repo --name="AppStream" --baseurl="http://repo.almalinux.org/almalinux/10/AppStream/x86_64/os/"
+${distro.repo_conf}
 
 %addon com_redhat_kdump --disable
 %end
@@ -560,12 +571,12 @@ systemctl enable chronyd
 }
 
 export function generateKickstartLive(data: Types.Configuration): string {
+    const distro = Config.Distros[data.distro]
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 
 	return `text
 reboot
-url --url="https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/"
-repo --name="AppStream" --baseurl="http://repo.almalinux.org/almalinux/10/AppStream/x86_64/os/"
+${distro.repo_conf}
 
 %addon com_redhat_kdump --disable
 %end

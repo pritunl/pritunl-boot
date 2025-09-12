@@ -14,6 +14,7 @@ function Register() {
 	const { navigate } = Router.useRouter()
 	const [disabled, setDisabled] = useState(false)
 	const [errorMsg, setErrorMsg] = useState("")
+	const [distro, setDistro] = useState("almalinux10")
 	const [setupMode, setSetupMode] = useState("live")
 	const [provider, setProvider] = useState("none")
 	const [networkMode, setNetworkMode] = useState("dhcp")
@@ -49,7 +50,23 @@ function Register() {
 							margin: "0 auto",
 						}}
 					/>
-					<Heading>Linux Boot Generator</Heading>
+					<Heading>Linux iPXE Boot Generator</Heading>
+
+					<Flex direction="column" gap="1">
+						<Text as="label" htmlFor="distro">
+							Linux Distribution
+						</Text>
+						<Select.Root
+							value={distro}
+							onValueChange={setDistro}
+						>
+							<Select.Trigger id="distro"/>
+							<Select.Content>
+								<Select.Item value="almalinux10">AlmaLinux 10</Select.Item>
+								<Select.Item value="oraclelinux10">Oracle Linux 10</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</Flex>
 
 					<Flex direction="column" gap="1">
 						<Text as="label" htmlFor="setup-mode">
@@ -287,6 +304,7 @@ function Register() {
 							setDisabled(true)
 
 							const payload = {
+								distro: distro,
 								mode: setupMode,
 								provider: provider,
 								network_mode: networkMode,

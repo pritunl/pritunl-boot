@@ -19,6 +19,7 @@ export interface Error {
 
 export interface Data {
 	id: string
+	distro: string
 	mode: "live" | "static"
 	provider: "none" | "latitude"
 	network_mode: "static" | "dhcp"
@@ -578,7 +579,7 @@ function Manage() {
 							margin: "0 auto",
 						}}
 					/>
-					<Heading>Linux Boot Generator</Heading>
+					<Heading>Linux iPXE Boot Generator</Heading>
 					{body}
 				</Flex>
 			</Container>

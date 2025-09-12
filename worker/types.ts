@@ -6,6 +6,7 @@ export interface Env {
 
 export interface Configuration {
 	id: string
+	distro: "almalinux10" | "oraclelinux10" | "rockylinux10" | "fedora"
 	mode: "live" | "static"
 	provider: "none" | "latitude"
 	network_mode: "static" | "dhcp"
