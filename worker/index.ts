@@ -165,10 +165,17 @@ async function getData(_request: Request,
 		return new Response(null, {status: 404})
 	}
 
+	let ipxeUrl = ""
+	if (data.secure) {
+		ipxeUrl = `${Config.BaseUrl}/${data.id}.ipxe`
+	} else {
+		ipxeUrl = `${Config.BaseUrlInsecure}/${data.id}.ipxe`
+	}
+
 	const ipxeConf = System.generateIpxe(data)
 	return Response.json({
 		...data,
-		ipxe_url: `${Config.BaseUrlInsecure}/${data.id}.ipxe`,
+		ipxe_url: ipxeUrl,
 		ks_url: `${Config.BaseUrl}/${data.id}.ks`,
 		ipxe: ipxeConf,
 	})

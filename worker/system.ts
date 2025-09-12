@@ -15,11 +15,12 @@ export function generateIpxe(data: Types.Configuration): string {
 		network = ` net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}`
 	}
 
-	let kernelUrl = distro.kernel_url.replace("https:", "http:")
-	let initrdUrl = distro.initrd_url.replace("https:", "http:")
+	if (!data.secure) {
+		let kernelUrl = distro.kernel_url.replace("https:", "http:")
+		let initrdUrl = distro.initrd_url.replace("https:", "http:")
 
-	if (data.provider === "latitude") {
-		return `#!ipxe
+		if (data.provider === "latitude") {
+			return `#!ipxe
 ifopen net{{ INTERFACE_ID }}
 set net{{ INTERFACE_ID }}/ip {{ PUBLIC_IP }}
 set net{{ INTERFACE_ID }}/netmask {{ NETMASK }}
@@ -29,11 +30,34 @@ set net{{ INTERFACE_ID }}/dns 8.8.8.8
 kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
 initrd ${initrdUrl}
 boot`
+		}
+
+		return `#!ipxe
+kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
+initrd ${initrdUrl}
+boot`
+	}
+
+	if (data.provider === "latitude") {
+		return `#!ipxe
+ifopen net{{ INTERFACE_ID }}
+set net{{ INTERFACE_ID }}/ip {{ PUBLIC_IP }}
+set net{{ INTERFACE_ID }}/netmask {{ NETMASK }}
+set net{{ INTERFACE_ID }}/gateway {{ PUBLIC_GW }}
+set net{{ INTERFACE_ID }}/dns 8.8.8.8
+
+kernel ${distro.kernel_url} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
+imgverify vmlinuz sha256:${distro.kernel_hash} || goto failed
+initrd ${distro.initrd_url}
+imgverify initrd.img sha256:${distro.initrd_hash} || goto failed
+boot`
 	}
 
 	return `#!ipxe
-kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
-initrd ${initrdUrl}
+kernel ${distro.kernel_url} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
+imgverify vmlinuz sha256:${distro.kernel_hash} || goto failed
+initrd ${distro.initrd_url}
+imgverify initrd.img sha256:${distro.initrd_hash} || goto failed
 boot`
 }
 
@@ -233,7 +257,7 @@ nmcli connection up ${vlanIface6}`
 }
 
 export function generateKickstart(data: Types.Configuration): string {
-    const distro = Config.Distros[data.distro]
+	const distro = Config.Distros[data.distro]
 
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	let publicMacFunc = ""
@@ -530,7 +554,7 @@ systemctl daemon-reload 2>/dev/null || true
 systemctl enable network-migration.service
 
 dnf -y update
-dnf -y remove cockpit-ws
+dnf -y remove cockpit-ws || true
 
 tee /etc/ssh/sshd_config.d/90-cloud.conf << EOF
 PermitRootLogin no
@@ -571,7 +595,7 @@ systemctl enable chronyd
 }
 
 export function generateKickstartLive(data: Types.Configuration): string {
-    const distro = Config.Distros[data.distro]
+	const distro = Config.Distros[data.distro]
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 
 	return `text
@@ -930,7 +954,7 @@ systemctl daemon-reload 2>/dev/null || true
 systemctl enable network-migration.service
 
 dnf -y update
-dnf -y remove cockpit-ws
+dnf -y remove cockpit-ws || true
 
 tee /etc/ssh/sshd_config.d/90-cloud.conf << EOF
 PermitRootLogin no

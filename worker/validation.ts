@@ -13,6 +13,10 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid mode")
 	}
 
+	if (typeof data.secure !== "boolean") {
+		throw new Types.ValidationError("Invalid secure format")
+	}
+
 	if (!data.provider || !["none", "latitude"].includes(data.provider)) {
 		throw new Types.ValidationError("Invalid provider")
 	}
@@ -128,6 +132,7 @@ export function validateConfiguration(
 		id: "",
 		distro: data.distro,
 		mode: data.mode,
+		secure: data.secure,
 		provider: data.provider,
 		network_mode: data.network_mode,
 		bonded_network: data.bonded_network,

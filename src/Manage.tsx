@@ -21,6 +21,7 @@ export interface Data {
 	id: string
 	distro: string
 	mode: "live" | "static"
+	secure: boolean
 	provider: "none" | "latitude"
 	network_mode: "static" | "dhcp"
 	bonded_network: boolean

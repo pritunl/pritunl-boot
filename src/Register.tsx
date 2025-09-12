@@ -16,6 +16,7 @@ function Register() {
 	const [errorMsg, setErrorMsg] = useState("")
 	const [distro, setDistro] = useState("almalinux10")
 	const [setupMode, setSetupMode] = useState("live")
+	const [secure, setSecure] = useState(false)
 	const [provider, setProvider] = useState("none")
 	const [networkMode, setNetworkMode] = useState("dhcp")
 	const [publicIp, setPublicIp] = useState("")
@@ -82,6 +83,17 @@ function Register() {
 								<Select.Item value="static">Preconfigured</Select.Item>
 							</Select.Content>
 						</Select.Root>
+					</Flex>
+
+					<Flex gap="2">
+						<Switch
+							id="ipxe-secure"
+							checked={secure}
+							onCheckedChange={setSecure}
+						/>
+						<Text as="label" htmlFor="ipxe-secure">
+							iPXE HTTPS Support
+						</Text>
 					</Flex>
 
 					<Flex direction="column" gap="1">
@@ -306,6 +318,7 @@ function Register() {
 							const payload = {
 								distro: distro,
 								mode: setupMode,
+								secure: secure,
 								provider: provider,
 								network_mode: networkMode,
 								bonded_network: bondedNetwork,
