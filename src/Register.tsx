@@ -369,7 +369,46 @@ function Register() {
 								setErrorMsg(`Unknown error: ${error}`)
 							})
 						}}
-					>Generate</Button>
+					>Generate iPXE Install</Button>
+
+					<Flex gap="2" direction={{initial: "column", xs: "row"}} wrap="wrap">
+						<Button
+							asChild
+							variant="outline"
+							style={{flexGrow: 1, flexBasis: "auto"}}
+						>
+							<Link href="https://pxe.pritunl.com/ipxe.iso">
+								Download iPXE
+							</Link>
+						</Button>
+						<Button
+							asChild
+							variant="outline"
+							style={{flexGrow: 1, flexBasis: "auto"}}
+						>
+							<Link href="https://github.com/pritunl/pritunl-boot">
+								GitHub
+							</Link>
+						</Button>
+						<Button
+							asChild
+							variant="outline"
+							style={{flexGrow: 1, flexBasis: "auto"}}
+						>
+							<Link href="https://forum.pritunl.com">
+								Forum
+							</Link>
+						</Button>
+						<Button
+							asChild
+							variant="outline"
+							style={{flexGrow: 1, flexBasis: "auto"}}
+						>
+							<Link href="https://docs.pritunl.com/boot">
+								Documentation
+							</Link>
+						</Button>
+					</Flex>
 				</Flex>
 			</Container>
 			<AlertDialog.Root open={!!errorMsg}>
