@@ -15,10 +15,14 @@ export function generateIpxe(data: Types.Configuration): string {
 		network = ` net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}`
 	}
 
+    let kernelUrl = distro.kernel_url
+    let initrdUrl = distro.initrd_url
 	if (!data.secure) {
-		let kernelUrl = distro.kernel_url.replace("https:", "http:")
-		let initrdUrl = distro.initrd_url.replace("https:", "http:")
+		kernelUrl = kernelUrl.replace("https:", "http:")
+		initrdUrl = initrdUrl.replace("https:", "http:")
+    }
 
+	if (!data.secure) {
 		if (data.provider === "latitude") {
 			return `#!ipxe
 ifopen net{{ INTERFACE_ID }}
@@ -46,18 +50,18 @@ set net{{ INTERFACE_ID }}/netmask {{ NETMASK }}
 set net{{ INTERFACE_ID }}/gateway {{ PUBLIC_GW }}
 set net{{ INTERFACE_ID }}/dns 8.8.8.8
 
-kernel ${distro.kernel_url} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
+kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host net.ifnames=0 biosdevname=0 ip={{ PUBLIC_IP }}::{{ PUBLIC_GW }}:{{ NETMASK }}::eth{{ INTERFACE_ID }}:off:8.8.8.8
 imgverify vmlinuz sha256:${distro.kernel_hash} || goto failed
 initrd ${distro.initrd_url}
-imgverify initrd.img sha256:${distro.initrd_hash} || goto failed
+imgverify initrd.img sha256:${initrdUrl} || goto failed
 boot`
 	}
 
 	return `#!ipxe
-kernel ${distro.kernel_url} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
+kernel ${kernelUrl} inst.repo=${distro.repo_url}${stage2} inst.ks=${Config.BaseUrl}/${data.id}.ks modprobe.blacklist=rndis_host${network}
 imgverify vmlinuz sha256:${distro.kernel_hash} || goto failed
 initrd ${distro.initrd_url}
-imgverify initrd.img sha256:${distro.initrd_hash} || goto failed
+imgverify initrd.img sha256:${initrdUrl} || goto failed
 boot`
 }
 

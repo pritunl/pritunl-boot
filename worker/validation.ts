@@ -17,6 +17,10 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid secure format")
 	}
 
+	if (typeof data.digest !== "boolean") {
+		throw new Types.ValidationError("Invalid digest format")
+	}
+
 	if (!data.provider || !["none", "latitude"].includes(data.provider)) {
 		throw new Types.ValidationError("Invalid provider")
 	}
@@ -133,6 +137,7 @@ export function validateConfiguration(
 		distro: data.distro,
 		mode: data.mode,
 		secure: data.secure,
+		digest: data.digest,
 		provider: data.provider,
 		network_mode: data.network_mode,
 		bonded_network: data.bonded_network,

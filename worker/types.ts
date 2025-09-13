@@ -8,6 +8,7 @@ export interface Configuration {
 	id: string
 	distro: "almalinux10" | "oraclelinux10" | "rockylinux10" | "fedora"
 	secure: boolean
+	digest: boolean
 	mode: "live" | "static"
 	provider: "none" | "latitude"
 	network_mode: "static" | "dhcp"
