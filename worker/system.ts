@@ -76,6 +76,33 @@ function getKernelNetwork(data: Types.Configuration): string {
 	return `ip=${publicIp}::${data.gateway_ip}:${netmask}::${iface}:off:8.8.8.8`
 }
 
+function getKickstartAddon(data: Types.Configuration): string {
+    if (data.distro === "fedora") {
+        return ""
+    }
+
+    return `
+
+%addon com_redhat_kdump --disable
+%end`
+}
+
+function getKickstartInstall(data: Types.Configuration): string {
+    if (data.distro === "fedora") {
+        return `%packages
+@^server-product-environment
+%end
+
+skipx`
+    }
+
+    return `%packages
+@^minimal-environment
+@standard
+-kexec-tools
+%end`
+}
+
 export function generateKickstartNetwork(
 	data: Types.Configuration, escape: boolean = true): string {
 
@@ -292,19 +319,13 @@ export function generateKickstart(data: Types.Configuration): string {
 
 	return `text
 reboot
-${distro.repo_conf}
 
-%addon com_redhat_kdump --disable
-%end
+${distro.repo_conf}${getKickstartAddon(data)}
 
 keyboard --xlayouts='us'
 lang en_US.UTF-8
 
-%packages
-@^minimal-environment
-@standard
--kexec-tools
-%end
+${getKickstartInstall(data)}
 
 firstboot --enable
 
@@ -604,19 +625,13 @@ export function generateKickstartLive(data: Types.Configuration): string {
 
 	return `text
 reboot
-${distro.repo_conf}
 
-%addon com_redhat_kdump --disable
-%end
+${distro.repo_conf}${getKickstartAddon(data)}
 
 keyboard --xlayouts='us'
 lang en_US.UTF-8
 
-%packages
-@^minimal-environment
-@standard
--kexec-tools
-%end
+${getKickstartInstall(data)}
 
 firstboot --enable
 
