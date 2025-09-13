@@ -36,3 +36,57 @@ npx wrangler
 npm run dev
 rpm run deploy
 ```
+
+## Building iPXE
+
+```bash
+sudo dnf -y install git-core gcc binutils make perl xz-devel mtools syslinux xorriso
+git clone https://github.com/pritunl/pritunl-boot.git
+git clone https://github.com/ipxe/ipxe.git
+cd ipxe/src
+tee config/local/general.h << 'EOF'
+#ifndef CONFIG_LOCAL_GENERAL_H
+#define CONFIG_LOCAL_GENERAL_H
+
+/** @file
+ *
+ * Local general configuration
+ *
+ */
+
+/*
+ * Download protocols
+ *
+ */
+#define DOWNLOAD_PROTO_HTTPS    /* Secure Hypertext Transfer Protocol */
+
+/*
+ * Image types
+ *
+ * Etherboot supports various image formats.  Select whichever ones
+ * you want to use.
+ *
+ */
+#define IMAGE_SCRIPT            /* iPXE script image support */
+#define IMAGE_LKRN              /* Linux kernel image support */
+#define IMAGE_ZLIB              /* ZLIB image support */
+#define IMAGE_GZIP              /* GZIP image support */
+
+/*
+ * Command-line commands to include
+ *
+ */
+#define DIGEST_CMD              /* Image crypto digest commands */
+#define VLAN_CMD                /* VLAN commands */
+#define REBOOT_CMD              /* Reboot command */
+#define IMAGE_TRUST_CMD         /* Image trust management commands */
+#define PING_CMD                /* Ping command */
+#define CERT_CMD                /* Certificate management commands */
+
+#endif /* CONFIG_LOCAL_GENERAL_H */
+EOF
+
+make bin-x86_64-efi/ipxe.iso
+sha256sum bin-x86_64-efi/ipxe.iso
+s3c cp bin-x86_64-efi/ipxe.iso r2-pxe:/ipxe.iso
+```
