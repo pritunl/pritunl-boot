@@ -15,3 +15,12 @@ waiting for the configuration, and once the selections are made from the web
 app, the configuration will be applied to the installation.
 
 [![pritunl](public/logo-code.png)](https://github.com/pritunl/pritunl-boot)
+
+## Debugging
+
+During installation use `Alt+F2` to access the console then check the log
+files in `/tmp/<ks-log>`.
+
+After installation the post install script log is available at
+`/root/ks-post.log` and the network configuration log at
+`journalctl -u network-migration.service`.
