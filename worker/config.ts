@@ -34,6 +34,15 @@ repo --name="ol10_appstream" --baseurl="https://yum.oracle.com/repo/OracleLinux/
 		stage2_url: "https://pxe.pritunl.com/oraclelinux10",
 		stage2_hash: "dc4537c3f2bc86c29d58be161dcc74e8bb1e0277f0ebe2afebc8d51182395a47",
 	},
+	"rockylinux10": {
+		repo_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/",
+		repo_conf: `url --url="https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/"
+repo --name="AppStream" --baseurl="https://dl.rockylinux.org/pub/rocky/10/AppStream/x86_64/os/"`,
+		kernel_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz",
+		kernel_hash: "1e93b0129511f8fcea90b2c32f1eb554d9014b3b0b66e2cdb30cea6e3f230dee",
+		initrd_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
+		initrd_hash: "27bd2b2003c2970ea94eb44318d9e24d2858725340e8fff7536960c21c35a3a8",
+	},
 }
 
 export const IpxeUrl = "https://pxe.pritunl.com/ipxe.iso"

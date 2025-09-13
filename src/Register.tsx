@@ -7,7 +7,7 @@ import {
 	Text, TextArea,
 	Button, Select,
 	Switch, TextField,
-	AlertDialog,
+	Link, AlertDialog,
 } from "@radix-ui/themes"
 
 function Register() {
@@ -65,6 +65,7 @@ function Register() {
 							<Select.Content>
 								<Select.Item value="almalinux10">AlmaLinux 10</Select.Item>
 								<Select.Item value="oraclelinux10">Oracle Linux 10</Select.Item>
+								<Select.Item value="rockylinux10">Rocky Linux 10</Select.Item>
 							</Select.Content>
 						</Select.Root>
 					</Flex>
