@@ -24,3 +24,15 @@ files in `/tmp/<ks-log>`.
 After installation the post install script log is available at
 `/root/ks-post.log` and the network configuration log at
 `journalctl -u network-migration.service`.
+
+## Building
+
+```bash
+sudo dnf -y install git-core npm
+git clone https://github.com/pritunl/pritunl-boot.git
+cd pritunl-boot
+npm install
+npx wrangler
+npm run dev
+rpm run deploy
+```
