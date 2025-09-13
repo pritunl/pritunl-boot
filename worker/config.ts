@@ -37,4 +37,4 @@ repo --name="ol10_appstream" --baseurl="https://yum.oracle.com/repo/OracleLinux/
 }
 
 export const IpxeUrl = "https://pxe.pritunl.com/ipxe.iso"
-export const IpxeHash = "38effb326f626aeb8b7576fe01ff53886f03b58ee3837e7e5879634bed05e328"
+export const IpxeHash = "1a4deb6d0107d831331da286f8c252f945088880075c4bb0925c23b52f04451d"
