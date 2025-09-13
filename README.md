@@ -5,7 +5,7 @@
 [![medium](https://img.shields.io/badge/medium-pritunl-b32b2b.svg?style=flat)](https://pritunl.medium.com)
 [![forum](https://img.shields.io/badge/discussion-forum-ffffff.svg?style=flat)](https://forum.pritunl.com)
 
-[Pritunl Boot](https://github.com/pritunl/pritunl-boot) is an interactive iPXE
+[Pritunl Boot](https://boot.pritunl.com) is an interactive iPXE
 boot installation tool. This tool allows for an iPXE Linux installation without
 knowledge of the system resources such as disk layout and network adapters. The
 Linux Kickstart installation script will send the resource layout to the boot
