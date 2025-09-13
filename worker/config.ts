@@ -43,6 +43,15 @@ repo --name="AppStream" --baseurl="https://dl.rockylinux.org/pub/rocky/10/AppStr
 		initrd_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
 		initrd_hash: "27bd2b2003c2970ea94eb44318d9e24d2858725340e8fff7536960c21c35a3a8",
 	},
+	"fedora": {
+		repo_url: "https://iad.mirror.rackspace.com/fedora/releases/42/Server/x86_64/os/",
+		repo_conf: `url --url="https://iad.mirror.rackspace.com/fedora/releases/42/Server/x86_64/os/"
+repo --name="updates" --baseurl="https://iad.mirror.rackspace.com/fedora/updates/42/Everything/x86_64/"`,
+		kernel_url: "https://iad.mirror.rackspace.com/fedora/releases/42/Server/x86_64/os/images/pxeboot/vmlinuz",
+		kernel_hash: "507b2265becc1125b372233c43b044ca68d8cdeba9ed7da2544e1c98529ec289",
+		initrd_url: "https://iad.mirror.rackspace.com/fedora/releases/42/Server/x86_64/os/images/pxeboot/initrd.img",
+		initrd_hash: "dcd37ecc18d9ae84b40fd7f8092c9f8e1f1cbb5572d3760ab723a405d02e9868",
+	},
 }
 
 export const IpxeUrl = "https://pxe.pritunl.com/ipxe.iso"
