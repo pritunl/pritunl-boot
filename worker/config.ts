@@ -35,3 +35,6 @@ repo --name="ol10_appstream" --baseurl="https://yum.oracle.com/repo/OracleLinux/
 		stage2_hash: "dc4537c3f2bc86c29d58be161dcc74e8bb1e0277f0ebe2afebc8d51182395a47",
 	},
 }
+
+export const IpxeUrl = "https://pxe.pritunl.com/ipxe.iso"
+export const IpxeHash = "38effb326f626aeb8b7576fe01ff53886f03b58ee3837e7e5879634bed05e328"
