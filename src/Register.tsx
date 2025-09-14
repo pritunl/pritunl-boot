@@ -63,10 +63,30 @@ function Register() {
 						>
 							<Select.Trigger id="distro"/>
 							<Select.Content>
-								<Select.Item value="almalinux10">AlmaLinux 10</Select.Item>
-								<Select.Item value="oraclelinux10">Oracle Linux 10</Select.Item>
-								<Select.Item value="rockylinux10">Rocky Linux 10</Select.Item>
-								<Select.Item value="fedora">Fedora Server 42</Select.Item>
+								<Select.Item value="almalinux10">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="almalinux-logo"/>
+										<span>AlmaLinux 10</span>
+									</Flex>
+								</Select.Item>
+								<Select.Item value="oraclelinux10">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="oraclelinux-logo"/>
+										<span>Oracle Linux 10</span>
+									</Flex>
+								</Select.Item>
+								<Select.Item value="rockylinux10">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="rockylinux-logo"/>
+										<span>Rocky Linux 10</span>
+									</Flex>
+								</Select.Item>
+								<Select.Item value="fedora">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="fedora-logo"/>
+										<span>Fedora Server 42</span>
+									</Flex>
+								</Select.Item>
 							</Select.Content>
 						</Select.Root>
 					</Flex>
