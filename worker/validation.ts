@@ -13,11 +13,15 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid mode")
 	}
 
-	if (typeof data.secure !== "boolean") {
+	if (!data.secure) {
+		data.secure = false
+	} else if (typeof data.secure !== "boolean") {
 		throw new Types.ValidationError("Invalid secure format")
 	}
 
-	if (typeof data.digest !== "boolean") {
+	if (!data.digest) {
+		data.digest = false
+	} else if (typeof data.digest !== "boolean") {
 		throw new Types.ValidationError("Invalid digest format")
 	}
 
@@ -31,7 +35,9 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid network_mode")
 	}
 
-	if (typeof data.bonded_network !== "boolean") {
+	if (!data.bonded_network) {
+		data.bonded_network = false
+	} else if (typeof data.bonded_network !== "boolean") {
 		throw new Types.ValidationError("Invalid bonded_network format")
 	}
 	if (data.interface && !isValidInterfaceName(data.interface)) {
