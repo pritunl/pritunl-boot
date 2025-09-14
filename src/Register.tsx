@@ -10,6 +10,17 @@ import {
 	Link, AlertDialog,
 } from "@radix-ui/themes"
 
+const css = {
+	logo: {
+		display: "inline-block",
+		backgroundRepeat: "no-repeat",
+    backgroundSize: "contain",
+    backgroundPosition: "center",
+		height: "18px",
+		width: "18px",
+	} as React.CSSProperties,
+}
+
 function Register() {
 	const { navigate } = Router.useRouter()
 	const [disabled, setDisabled] = useState(false)
