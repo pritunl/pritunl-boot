@@ -140,7 +140,18 @@ function Register() {
 							<Select.Trigger id="provider"/>
 							<Select.Content>
 								<Select.Item value="none">None</Select.Item>
-								<Select.Item value="latitude">Latitude.sh</Select.Item>
+								<Select.Item value="latitude">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="latitude-logo"/>
+										<span>Latitude.sh</span>
+									</Flex>
+									</Select.Item>
+								<Select.Item value="vultr">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="vultr-logo"/>
+										<span>Vultr</span>
+									</Flex>
+								</Select.Item>
 							</Select.Content>
 						</Select.Root>
 					</Flex>
