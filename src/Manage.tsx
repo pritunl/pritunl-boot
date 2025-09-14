@@ -246,7 +246,8 @@ function Manage() {
 			case "complete":
 				spinner = false
 				stageColor = "green"
-				stageInfo = "Installation complete"
+				stageInfo = `Installation complete: ssh cloud@${(publicIp ||
+					data?.public_ip)?.split("/")[0] || "<public_ip>"}`
 				break
 			default:
 				spinner = true
