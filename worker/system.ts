@@ -615,6 +615,10 @@ systemctl disable firewalld
 systemctl stop firewalld
 systemctl start chronyd
 systemctl enable chronyd
+
+sync
+
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/reboot || true
 %end
 `
 }
@@ -1009,6 +1013,10 @@ systemctl disable firewalld
 systemctl stop firewalld
 systemctl start chronyd
 systemctl enable chronyd
+
+sync
+
+curl -X POST ${Config.BaseUrl}/${data.id}/stage/reboot || true
 %end
 `
 }

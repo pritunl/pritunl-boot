@@ -238,6 +238,11 @@ function Manage() {
 				stageColor = "mint"
 				stageInfo = "System in post-installation..."
 				break
+			case "reboot":
+				spinner = true
+				stageColor = "teal"
+				stageInfo = "Waiting for system reboot..."
+				break
 			case "complete":
 				spinner = false
 				stageColor = "green"

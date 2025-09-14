@@ -17,6 +17,7 @@
 			"/*/stage/pre",
 			"/*/stage/install",
 			"/*/stage/post",
+			"/*/stage/reboot",
 			"/*/stage/complete",
 			"/register"
 		]

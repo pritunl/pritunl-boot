@@ -109,6 +109,14 @@ export default {
 						return postStage(request, env, match[1], "post")
 					}
 				}
+				if (url.pathname.endsWith("/stage/reboot") &&
+					request.method == "POST") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/stage\/reboot$/)
+					if (match && match[1]) {
+						return postStage(request, env, match[1], "reboot")
+					}
+				}
 				if (url.pathname.endsWith("/stage/complete") &&
 					request.method == "POST") {
 
