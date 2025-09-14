@@ -22,7 +22,7 @@ export function generateIpxe(data: Types.Configuration): string {
 		initrdUrl = initrdUrl.replace("https:", "http:")
     }
 
-	if (!data.secure) {
+	if (!data.digest) {
 		if (data.provider === "latitude") {
 			return `#!ipxe
 ifopen net{{ INTERFACE_ID }}
