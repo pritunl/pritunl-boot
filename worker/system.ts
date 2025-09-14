@@ -129,6 +129,8 @@ fi`
 	}
 
 	let conf = `
+sleep 3
+
 get_iface_from_mac() {
     local mac="${esc}$1"
     mac=${esc}$(echo "${esc}$mac" | tr '[:upper:]' '[:lower:]')
