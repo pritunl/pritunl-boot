@@ -545,6 +545,10 @@ ExecStart=/usr/local/bin/network-migration.sh
 RemainAfterExit=no
 StandardOutput=journal
 StandardError=journal
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitIntervalSec=180
 
 [Install]
 WantedBy=multi-user.target
@@ -952,6 +956,10 @@ ExecStart=/usr/local/bin/network-migration.sh
 RemainAfterExit=no
 StandardOutput=journal
 StandardError=journal
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitIntervalSec=180
 
 [Install]
 WantedBy=multi-user.target
