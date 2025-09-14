@@ -114,7 +114,7 @@ function Register() {
 						</Select.Root>
 					</Flex>
 
-					{provider !== "latitude" && (<>
+					{!["latitude", "vultr"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="network-config">
 								Network Configuration
@@ -132,7 +132,8 @@ function Register() {
 						</Flex>
 					</>)}
 
-					{provider !== "latitude" && setupMode === "static" && (<>
+					{!["latitude", "vultr"].includes(provider) &&
+							setupMode === "static" && (<>
 						<Flex gap="2">
 							<Switch
 								id="bonded-network"
@@ -145,7 +146,7 @@ function Register() {
 						</Flex>
 					</>)}
 
-					{networkMode === "static" && provider !== "latitude" && (<>
+					{networkMode === "static" && !["latitude", "vultr"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="public-ip">
 								Public IPv4
@@ -185,7 +186,7 @@ function Register() {
 					</>)}
 
 					{setupMode === "static" && networkMode === "static" &&
-							provider !== "latitude" && (<>
+							!["latitude", "vultr"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="public-ip6">
 								Public IPv6
@@ -240,7 +241,7 @@ function Register() {
 					</>)}
 
 					{(setupMode === "live" || !bondedNetwork) &&
-							provider !== "latitude" && (<>
+							!["latitude", "vultr"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="interface">
 								Interface Name

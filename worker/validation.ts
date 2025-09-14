@@ -21,7 +21,9 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid digest format")
 	}
 
-	if (!data.provider || !["none", "latitude"].includes(data.provider)) {
+	if (!data.provider ||
+		!["none", "latitude", "vultr"].includes(data.provider)) {
+
 		throw new Types.ValidationError("Invalid provider")
 	}
 
