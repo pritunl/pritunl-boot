@@ -203,7 +203,7 @@ function Manage() {
 					<Text>{iface.model}</Text>
 					<Text>
 						{iface.ip || "-"}
-						<Text color="gray">{" " + iface.gateway_ip || ""}</Text>
+						<Text color="gray">{" " + (iface.gateway_ip || "")}</Text>
 					</Text>
 				</Flex>
 			</CheckboxCards.Item>
