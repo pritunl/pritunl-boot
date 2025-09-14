@@ -257,9 +257,7 @@ function Manage() {
 
 		body = <>
 			<Callout.Root variant="outline" color={stageColor as any}>
-				<Callout.Icon>
-					{spinner ? <Spinner size="2"/> : <></>}
-				</Callout.Icon>
+				{spinner ? <Callout.Icon><Spinner size="2"/></Callout.Icon> : <></>}
 				<Callout.Text>
 					<b>{stageInfo}</b>
 				</Callout.Text>
