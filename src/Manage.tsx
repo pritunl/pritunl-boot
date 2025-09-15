@@ -366,111 +366,113 @@ function Manage() {
 				</Select.Root>
 			</Flex>
 
-			{networkMode === "static" && (<>
-				<Flex gap="2">
-					<Switch
-						id="bonded-network"
-						checked={bondedNetwork}
-						onCheckedChange={setBondedNetwork}
-					/>
-					<Text as="label" htmlFor="bonded-network">
-						Bonded Network
-					</Text>
-				</Flex>
-			</>)}
+			<Flex gap="2">
+				<Switch
+					id="bonded-network"
+					checked={networkMode !== "static" ? false : bondedNetwork}
+					disabled={networkMode !== "static"}
+					onCheckedChange={setBondedNetwork}
+				/>
+				<Text as="label" htmlFor="bonded-network">
+					Bonded Network
+				</Text>
+			</Flex>
 
-			{networkMode === "static" && (<>
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="public-ip">
-						Public IPv4
-					</Text>
-					<TextField.Root
-						id="public-ip"
-						placeholder="142.250.73.110/24"
-						value={publicIp}
-						onChange={(e) => setPublicIp(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="public-ip">
+					Public IPv4
+				</Text>
+				<TextField.Root
+					id="public-ip"
+					placeholder="142.250.73.110/24"
+					value={networkMode !== "static" ? "" : publicIp}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setPublicIp(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="gateway-ip">
-						Gateway IPv4
-					</Text>
-					<TextField.Root
-						id="gateway-ip"
-						placeholder="142.250.73.1"
-						value={gatewayIp}
-						onChange={(e) => setGatewayIp(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="gateway-ip">
+					Gateway IPv4
+				</Text>
+				<TextField.Root
+					id="gateway-ip"
+					placeholder="142.250.73.1"
+					value={networkMode !== "static" ? "" : gatewayIp}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setGatewayIp(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="vlan">
-						VLAN ID IPv4
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="vlan"
-						placeholder="0"
-						value={vlan}
-						onChange={(e) => setVlan(e.target.value)}
-					/>
-				</Flex>
-			</>)}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="vlan">
+					VLAN ID IPv4
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="vlan"
+					placeholder="0"
+					value={networkMode !== "static" ? "" : vlan}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setVlan(e.target.value)}
+				/>
+			</Flex>
 
-			{networkMode === "static" && (<>
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="public-ip6">
-						Public IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="public-ip6"
-						placeholder="2607:f8b0:400a:800::200e/64"
-						value={publicIp6}
-						onChange={(e) => setPublicIp6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="public-ip6">
+					Public IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="public-ip6"
+					placeholder="2607:f8b0:400a:800::200e/64"
+					value={networkMode !== "static" ? "" : publicIp6}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setPublicIp6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="gateway-ip6">
-						Gateway IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="gateway-ip6"
-						placeholder="2607:f8b0:400a:800::1"
-						value={gatewayIp6}
-						onChange={(e) => setGatewayIp6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="gateway-ip6">
+					Gateway IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="gateway-ip6"
+					placeholder="2607:f8b0:400a:800::1"
+					value={networkMode !== "static" ? "" : gatewayIp6}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setGatewayIp6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="vlan6">
-						VLAN ID IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="vlan6"
-						placeholder="0"
-						value={vlan6}
-						onChange={(e) => setVlan6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="vlan6">
+					VLAN ID IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="vlan6"
+					placeholder="0"
+					value={networkMode !== "static" ? "" : vlan6}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setVlan6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="mtu">
-						Network MTU
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="mtu"
-						placeholder="1500"
-						value={mtu}
-						onChange={(e) => setMtu(e.target.value)}
-					/>
-				</Flex>
-			</>)}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="mtu">
+					Network MTU
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="mtu"
+					placeholder="1500"
+					value={networkMode !== "static" ? "" : mtu}
+					disabled={networkMode !== "static"}
+					onChange={(e) => setMtu(e.target.value)}
+				/>
+			</Flex>
 		</Flex>
 
 		let privateNetConf = <Flex direction="column" gap="3">
@@ -509,111 +511,113 @@ function Manage() {
 				</Select.Root>
 			</Flex>
 
-			{privateNetworkMode === "static" && (<>
-				<Flex gap="2">
-					<Switch
-						id="bonded-network"
-						checked={privateBondedNetwork}
-						onCheckedChange={setPrivateBondedNetwork}
-					/>
-					<Text as="label" htmlFor="bonded-network">
-						Bonded Network
-					</Text>
-				</Flex>
-			</>)}
+			<Flex gap="2">
+				<Switch
+					id="bonded-network"
+					checked={privateNetworkMode !== "static" ? false : privateBondedNetwork}
+					disabled={privateNetworkMode !== "static"}
+					onCheckedChange={setPrivateBondedNetwork}
+				/>
+				<Text as="label" htmlFor="bonded-network">
+					Bonded Network
+				</Text>
+			</Flex>
 
-			{privateNetworkMode === "static" && (<>
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-ip">
-						Private IPv4
-					</Text>
-					<TextField.Root
-						id="private-ip"
-						placeholder="192.168.1.100/24"
-						value={privateIp}
-						onChange={(e) => setPrivateIp(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-ip">
+					Private IPv4
+				</Text>
+				<TextField.Root
+					id="private-ip"
+					placeholder="192.168.1.100/24"
+					value={privateNetworkMode !== "static" ? "" : privateIp}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateIp(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-gateway-ip">
-						Gateway IPv4
-					</Text>
-					<TextField.Root
-						id="private-gateway-ip"
-						placeholder="192.168.1.1"
-						value={privateGatewayIp}
-						onChange={(e) => setPrivateGatewayIp(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-gateway-ip">
+					Gateway IPv4
+				</Text>
+				<TextField.Root
+					id="private-gateway-ip"
+					placeholder="192.168.1.1"
+					value={privateNetworkMode !== "static" ? "" : privateGatewayIp}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateGatewayIp(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-vlan">
-						VLAN ID IPv4
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="private-vlan"
-						placeholder="0"
-						value={privateVlan}
-						onChange={(e) => setPrivateVlan(e.target.value)}
-					/>
-				</Flex>
-			</>)}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-vlan">
+					VLAN ID IPv4
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="private-vlan"
+					placeholder="0"
+					value={privateNetworkMode !== "static" ? "" : privateVlan}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateVlan(e.target.value)}
+				/>
+			</Flex>
 
-			{privateNetworkMode === "static" && (<>
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-ip6">
-						Private IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="private-ip6"
-						placeholder="fd00::100/64"
-						value={privateIp6}
-						onChange={(e) => setPrivateIp6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-ip6">
+					Private IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="private-ip6"
+					placeholder="fd00::100/64"
+					value={privateNetworkMode !== "static" ? "" : privateIp6}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateIp6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-gateway-ip6">
-						Gateway IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="private-gateway-ip6"
-						placeholder="fd00::1"
-						value={privateGatewayIp6}
-						onChange={(e) => setPrivateGatewayIp6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-gateway-ip6">
+					Gateway IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="private-gateway-ip6"
+					placeholder="fd00::1"
+					value={privateNetworkMode !== "static" ? "" : privateGatewayIp6}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateGatewayIp6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-vlan6">
-						VLAN ID IPv6
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="private-vlan6"
-						placeholder="0"
-						value={privateVlan6}
-						onChange={(e) => setPrivateVlan6(e.target.value)}
-					/>
-				</Flex>
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-vlan6">
+					VLAN ID IPv6
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="private-vlan6"
+					placeholder="0"
+					value={privateNetworkMode !== "static" ? "" : privateVlan6}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateVlan6(e.target.value)}
+				/>
+			</Flex>
 
-				<Flex direction="column" gap="1">
-					<Text as="label" htmlFor="private-mtu">
-						Network MTU
-						<Text color="gray"> (Optional)</Text>
-					</Text>
-					<TextField.Root
-						id="private-mtu"
-						placeholder="1500"
-						value={privateMtu}
-						onChange={(e) => setPrivateMtu(e.target.value)}
-					/>
-				</Flex>
-			</>)}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="private-mtu">
+					Network MTU
+					<Text color="gray"> (Optional)</Text>
+				</Text>
+				<TextField.Root
+					id="private-mtu"
+					placeholder="1500"
+					value={privateNetworkMode !== "static" ? "" : privateMtu}
+					disabled={privateNetworkMode !== "static"}
+					onChange={(e) => setPrivateMtu(e.target.value)}
+				/>
+			</Flex>
 		</Flex>
 
 		body = <>
