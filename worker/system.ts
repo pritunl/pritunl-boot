@@ -107,8 +107,10 @@ export function generateKickstartNetwork(
 	data: Types.Configuration, escape: boolean = true): string {
 
 	let rootIface = ""
+	let rootMac = ""
 	let interfaceConf = ""
 	let esc = escape ? "\\" : ""
+	let nmConns = new Set<string>()
 
 	if (data.interfaces) {
 		data.interfaces.forEach((iface: string, index: number) => {
@@ -126,6 +128,17 @@ if [ ${esc}$? -ne 0 ] || [ -z "${esc}$INTERFACE" ]; then
     echo "Failed to find interface with MAC ${esc}$MAC_ADDR"
     exit 1
 fi`
+	}
+
+	if (data.private_interfaces) {
+		data.private_interfaces.forEach((iface: string, index: number) => {
+			interfaceConf += `
+PRIVATE_INTERFACE${index}=${esc}$(get_iface_from_mac "${iface}")
+if [ ${esc}$? -ne 0 ] || [ -z "${esc}$PRIVATE_INTERFACE${index}" ]; then
+    echo "Failed to find private interface with MAC ${iface}"
+    exit 1
+fi`
+		})
 	}
 
 	let conf = `
@@ -146,7 +159,7 @@ ${interfaceConf}
 nmcli general hostname cloud
 
 nmcli -g UUID connection show | while read connid; do
-    nmcli connection delete "${esc}$connid"
+    [ -n "${esc}$connid" ] && nmcli connection delete "${esc}$connid"
 done
 
 sleep 1`
@@ -158,19 +171,24 @@ sleep 1`
 			bondOpts += `,mtu=${data.mtu}`
 		}
 
+		nmConns.add(rootIface)
 		conf += `
 nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
 		data.interfaces.forEach((_iface: string, index: number) => {
+			nmConns.add(`${rootIface}-slave${index}`)
 			conf += `
-nmcli connection add type bond-slave con-name bond0-slave${index} ifname "${esc}$INTERFACE${index}" master bond0`
+nmcli connection add type bond-slave con-name ${rootIface}-slave${index} ifname "${esc}$INTERFACE${index}" master ${rootIface}`
 		})
 	} else {
 		if (data.interfaces) {
+			rootMac = data.interfaces[0]
 			rootIface = `"${esc}$INTERFACE0"`
 		} else {
+			rootMac = data.interface || ""
 			rootIface = `"${esc}$INTERFACE"`
 		}
 
+		nmConns.add(rootMac)
 		conf += `
 nmcli connection add type ethernet con-name ${rootIface} ifname ${rootIface} connection.autoconnect yes`
 
@@ -199,11 +217,12 @@ nmcli connection modify ${rootIface} ipv4.method disabled`
 
 		if (!data.vlan6) {
 			if (data.network_mode === "static" && data.public_ip6) {
-				conf += `
-nmcli connection modify ${rootIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
 				if (data.gateway_ip6) {
 					conf += `
-nmcli connection modify ${rootIface} ipv6.gateway ${data.gateway_ip6}`
+nmcli connection modify ${rootIface} ipv6.method manual ipv6.addresses ${data.public_ip6} ipv6.gateway ${data.gateway_ip6}`
+				} else {
+					conf += `
+nmcli connection modify ${rootIface} ipv6.method auto ipv6.addresses ${data.public_ip6}`
 				}
 			} else {
 				conf += `
@@ -222,6 +241,7 @@ sleep 1
 
 	if (data.vlan) {
 		let vlanIface = `${rootIface}.${data.vlan}`
+		nmConns.add(`${rootMac}.${data.vlan}`)
 		conf += `
 nmcli connection add type vlan con-name ${vlanIface} ifname ${vlanIface} dev ${rootIface} id ${data.vlan} connection.autoconnect yes`
 
@@ -240,11 +260,12 @@ nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"
 
 		if (data.vlan === data.vlan6) {
 			if (data.network_mode === "static" && data.public_ip6) {
-				conf += `
-nmcli connection modify ${vlanIface} ipv6.method manual ipv6.addresses ${data.public_ip6}`
 				if (data.gateway_ip6) {
 					conf += `
-nmcli connection modify ${vlanIface} ipv6.gateway ${data.gateway_ip6}`
+nmcli connection modify ${vlanIface} ipv6.method manual ipv6.addresses ${data.public_ip6} ipv6.gateway ${data.gateway_ip6}`
+				} else {
+					conf += `
+nmcli connection modify ${vlanIface} ipv6.method auto ipv6.addresses ${data.public_ip6}`
 				}
 			} else {
 				conf += `
@@ -262,6 +283,7 @@ nmcli connection up ${vlanIface}
 
 	if (data.vlan6 && data.vlan6 !== data.vlan) {
 		let vlanIface6 = `${rootIface}.${data.vlan6}`
+		nmConns.add(`${rootMac}.${data.vlan6}`)
 		conf += `
 nmcli connection add type vlan con-name ${vlanIface6} ifname ${vlanIface6} dev ${rootIface} id ${data.vlan6} ipv4.method disabled connection.autoconnect yes`
 
@@ -271,11 +293,12 @@ nmcli connection modify ${vlanIface6} mtu ${data.mtu}`
 		}
 
 		if (data.network_mode === "static" && data.public_ip6) {
-			conf += `
-nmcli connection modify ${vlanIface6} ipv6.method manual ipv6.addresses ${data.public_ip6}`
 			if (data.gateway_ip6) {
 				conf += `
-nmcli connection modify ${vlanIface6} ipv6.gateway ${data.gateway_ip6}`
+nmcli connection modify ${vlanIface6} ipv6.method manual ipv6.addresses ${data.public_ip6} ipv6.gateway ${data.gateway_ip6}`
+			} else {
+				conf += `
+nmcli connection modify ${vlanIface6} ipv6.method auto ipv6.addresses ${data.public_ip6}`
 			}
 		} else {
 			conf += `
@@ -283,7 +306,8 @@ nmcli connection modify ${vlanIface6} ipv6.method auto`
 		}
 
 		conf += `
-nmcli connection up ${vlanIface6}`
+nmcli connection up ${vlanIface6}
+`
 	}
 
 	return conf
