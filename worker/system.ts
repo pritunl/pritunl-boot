@@ -374,14 +374,14 @@ nmcli connection modify ${rootIface} ipv4.method disabled ipv6.method ignore`
 		if (!data.private_vlan) {
 			if (data.private_network_mode === "static") {
 				conf += `
-nmcli connection modify ${rootIface} ipv4.method manual +ipv4.addresses ${data.private_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+nmcli connection modify ${rootIface} ipv4.method manual +ipv4.addresses ${data.private_ip}`
 				if (data.private_gateway_ip) {
 					conf += `
 nmcli connection modify ${rootIface} +ipv4.gateway ${data.private_gateway_ip}`
 				}
 			} else {
 				conf += `
-nmcli connection modify ${rootIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+nmcli connection modify ${rootIface} ipv4.method auto`
 			}
 		} else if (!nmConns.has(rootMac)) {
 			conf += `
@@ -427,14 +427,14 @@ nmcli connection modify ${vlanIface} mtu ${data.private_mtu}`
 
 		if (data.private_network_mode === "static") {
 			conf += `
-nmcli connection modify ${vlanIface} ipv4.method manual +ipv4.addresses ${data.private_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+nmcli connection modify ${vlanIface} ipv4.method manual +ipv4.addresses ${data.private_ip}`
 			if (data.private_gateway_ip) {
 				conf += `
 nmcli connection modify ${vlanIface} +ipv4.gateway ${data.private_gateway_ip}`
 			}
 		} else {
 			conf += `
-nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+nmcli connection modify ${vlanIface} ipv4.method auto`
 		}
 
 		if (data.private_vlan === data.private_vlan6) {
