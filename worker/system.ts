@@ -15,12 +15,12 @@ export function generateIpxe(data: Types.Configuration): string {
 		network = ` net.ifnames=0 biosdevname=0 ${getKernelNetwork(data)}`
 	}
 
-    let kernelUrl = distro.kernel_url
-    let initrdUrl = distro.initrd_url
+	let kernelUrl = distro.kernel_url
+	let initrdUrl = distro.initrd_url
 	if (!data.secure) {
 		kernelUrl = kernelUrl.replace("https:", "http:")
 		initrdUrl = initrdUrl.replace("https:", "http:")
-    }
+	}
 
 	if (!data.digest) {
 		if (data.provider === "latitude") {
@@ -77,26 +77,26 @@ function getKernelNetwork(data: Types.Configuration): string {
 }
 
 function getKickstartAddon(data: Types.Configuration): string {
-    if (data.distro === "fedora") {
-        return ""
-    }
+	if (data.distro === "fedora") {
+		return ""
+	}
 
-    return `
+	return `
 
 %addon com_redhat_kdump --disable
 %end`
 }
 
 function getKickstartInstall(data: Types.Configuration): string {
-    if (data.distro === "fedora") {
-        return `%packages
+	if (data.distro === "fedora") {
+		return `%packages
 @^server-product-environment
 %end
 
 skipx`
-    }
+	}
 
-    return `%packages
+	return `%packages
 @^minimal-environment
 @standard
 -kexec-tools
@@ -310,9 +310,9 @@ nmcli connection up ${vlanIface6}
 `
 	}
 
-    if (data.private_network_mode !== "none") {
-        conf += generateKickstartPrivateNetwork(data, escape, nmConns)
-    }
+	if (data.private_network_mode !== "none") {
+		conf += generateKickstartPrivateNetwork(data, escape, nmConns)
+	}
 
 	return conf
 }
