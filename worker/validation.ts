@@ -263,6 +263,8 @@ export function validateConfiguration(
 		} catch (error) {
 			throw new Types.ValidationError("Failed to encode SSH keys")
 		}
+	} else {
+		throw new Types.ValidationError("Missing SSH keys")
 	}
 
 	if (typeof data.long_url_key !== "boolean") {
