@@ -54,6 +54,12 @@ tee config/local/general.h << 'EOF'
  *
  */
 
+ /*
+ * Banner timeout configuration
+ *
+ */
+#define BANNER_TIMEOUT          100
+
 /*
  * Download protocols
  *
