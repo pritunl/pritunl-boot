@@ -81,3 +81,36 @@ export function parseRootSize(size: string): number {
 export function cidrToIp(cidr: string): string {
 	return cidr.split('/')[0]
 }
+
+export function arrayMatch(x?: string[], y?: string[]): boolean {
+	if (!x || !y) {
+		return false
+	}
+
+	if (x.length !== y.length) {
+		return false;
+	}
+
+	const xMap = new Map<string, number>();
+	const yMap = new Map<string, number>();
+
+	for (const item of x) {
+		xMap.set(item, (xMap.get(item) || 0) + 1);
+	}
+
+	for (const item of y) {
+		yMap.set(item, (yMap.get(item) || 0) + 1);
+	}
+
+	if (xMap.size !== yMap.size) {
+		return false;
+	}
+
+	for (const [key, count] of xMap) {
+		if (yMap.get(key) !== count) {
+			return false;
+		}
+	}
+
+	return true;
+}
