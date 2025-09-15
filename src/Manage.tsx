@@ -10,7 +10,8 @@ import {
 	Button, TextField,
 	Select, CheckboxCards,
 	Switch, Callout,
-	Spinner, AlertDialog
+	Spinner, Tabs,
+	AlertDialog
 } from "@radix-ui/themes"
 
 export interface Error {
@@ -80,7 +81,7 @@ function Manage() {
 	const [system, setSystem] = useState<System>()
 	const [stage, setStage] = useState("")
 
-	const [networkMode, setNetworkMode] = useState("dhcp")
+	const [networkMode, setNetworkMode] = useState("static")
 	const [publicIp, setPublicIp] = useState("")
 	const [gatewayIp, setGatewayIp] = useState("")
 	const [publicIp6, setPublicIp6] = useState("")
@@ -89,11 +90,23 @@ function Manage() {
 	const [vlan6, setVlan6] = useState("")
 	const [mtu, setMtu] = useState("")
 	const [bondedNetwork, setBondedNetwork] = useState(false)
+	const [selectedIfaces, setSelectedIfaces] = useState<string[]>([]);
+
+	const [privateNetworkMode, setPrivateNetworkMode] = useState("none")
+	const [privateIp, setPrivateIp] = useState("")
+	const [privateGatewayIp, setPrivateGatewayIp] = useState("")
+	const [privateIp6, setPrivateIp6] = useState("")
+	const [privateGatewayIp6, setPrivateGatewayIp6] = useState("")
+	const [privateVlan, setPrivateVlan] = useState("")
+	const [privateVlan6, setPrivateVlan6] = useState("")
+	const [privateMtu, setPrivateMtu] = useState("")
+	const [privateBondedNetwork, setPrivateBondedNetwork] = useState(false)
+	const [privateSelectedIfaces, setPrivateSelectedIfaces] = useState<string[]>([]);
+
 	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
 
 	const [selectedDisks, setSelectedDisks] = useState<string[]>([]);
-	const [selectedIfaces, setSelectedIfaces] = useState<string[]>([]);
 
 	useEffect(() => {
 		if (!bootId) {
@@ -318,67 +331,10 @@ function Manage() {
 			</Callout.Root>
 		</>
 	} else {
-		body = <>
-			<Callout.Root variant="outline">
-				<Callout.Icon>
-					<Spinner size="2"/>
-				</Callout.Icon>
-				<Callout.Text>
-					<b>Installer waiting for configuration...</b>
-				</Callout.Text>
-			</Callout.Root>
-
-			<Flex direction="column" gap="1">
-				<Text as="label" htmlFor="install-disks">
-					Select Install Disks
-				</Text>
-				<CheckboxCards.Root
-					id="install-disks"
-					defaultValue={[]}
-					columns="1"
-					size="1"
-					value={selectedDisks}
-					onValueChange={(selected: string[]) => {
-						setSelectedDisks(selected)
-					}}
-				>
-					{diskElms}
-				</CheckboxCards.Root>
-			</Flex>
-
-			<Flex direction="column" gap="1">
-				<Text as="label" htmlFor="disk-size">
-					Root Filesystem Size
-					<Text color="gray"> (Leave Blank to Fill Disk)</Text>
-				</Text>
-				<TextField.Root
-					id="disk-size"
-					placeholder="50GB"
-					value={rootSize}
-					onChange={(e) => setRootSize(e.target.value)}
-				/>
-			</Flex>
-
-			<Flex direction="column" gap="1">
-				<Text as="label" htmlFor="raid-config">
-					RAID Configuration
-				</Text>
-				<Select.Root
-					value={raidConfig}
-					onValueChange={setRaidConfig}
-				>
-					<Select.Trigger id="raid-config"/>
-					<Select.Content>
-						<Select.Item value="-1">No RAID</Select.Item>
-						<Select.Item value="1">RAID 1</Select.Item>
-						<Select.Item value="10">RAID 10</Select.Item>
-					</Select.Content>
-				</Select.Root>
-			</Flex>
-
+		let publicNetConf = <Flex direction="column" gap="3">
 			<Flex direction="column" gap="1">
 				<Text as="label" htmlFor="install-ifaces">
-					Select Network Interfaces
+					Select Public Network Interfaces
 				</Text>
 				<CheckboxCards.Root
 					id="install-ifaces"
@@ -396,7 +352,7 @@ function Manage() {
 
 			<Flex direction="column" gap="1">
 				<Text as="label" htmlFor="network-config">
-					Network Configuration
+					Public Network Configuration
 				</Text>
 				<Select.Root
 					value={networkMode}
@@ -515,59 +471,289 @@ function Manage() {
 					/>
 				</Flex>
 			</>)}
+		</Flex>
 
-			<Button
-				disabled={disabled}
-				onClick={() => {
-					setDisabled(true)
+		let privateNetConf = <Flex direction="column" gap="3">
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="install-ifaces">
+					Select Private Network Interfaces
+				</Text>
+				<CheckboxCards.Root
+					id="install-ifaces"
+					defaultValue={[]}
+					columns="1"
+					size="1"
+					value={privateSelectedIfaces}
+					onValueChange={(selected: string[]) => {
+						setPrivateSelectedIfaces(selected)
+					}}
+				>
+					{ifaceElms}
+				</CheckboxCards.Root>
+			</Flex>
 
-					const payload = {
-						network_mode: networkMode,
-						bonded_network: bondedNetwork,
-						public_ip: publicIp,
-						gateway_ip: gatewayIp,
-						public_ip6: publicIp6,
-						gateway_ip6: gatewayIp6,
-						vlan: vlan ? parseInt(vlan, 10) : 0,
-						vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
-						mtu: mtu ? parseInt(mtu, 10) : 0,
-						root_size: rootSize,
-						raid: parseInt(raidConfig, 10),
-						disks: selectedDisks,
-						interfaces: selectedIfaces,
-					}
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="network-config">
+					Private Network Configuration
+				</Text>
+				<Select.Root
+					value={privateNetworkMode}
+					onValueChange={setPrivateNetworkMode}
+				>
+					<Select.Trigger id="network-config"/>
+					<Select.Content>
+						<Select.Item value="none">Disabled</Select.Item>
+						<Select.Item value="static">Static</Select.Item>
+						<Select.Item value="dhcp">DHCP</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</Flex>
 
-					fetch(`/${data.id}/install`, {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify(payload),
-					}).then(async (resp) => {
-						setDisabled(false)
-						if (!resp.ok) {
-							if (resp.status === 400) {
-								const errorData = await resp.json() as {
-									error: string
-								}
-								setErrorMsg(errorData.error || "Unknown error")
-							} else {
-								try {
-									const respText = await resp.text()
-									setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-								} catch {
-									setErrorMsg(`Unknown error: ${resp.status}`)
-								}
-							}
-						} else {
-							setStage("ready")
+			{privateNetworkMode === "static" && (<>
+				<Flex gap="2">
+					<Switch
+						id="bonded-network"
+						checked={privateBondedNetwork}
+						onCheckedChange={setPrivateBondedNetwork}
+					/>
+					<Text as="label" htmlFor="bonded-network">
+						Bonded Network
+					</Text>
+				</Flex>
+			</>)}
+
+			{privateNetworkMode === "static" && (<>
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-ip">
+						Private IPv4
+					</Text>
+					<TextField.Root
+						id="private-ip"
+						placeholder="192.168.1.100/24"
+						value={privateIp}
+						onChange={(e) => setPrivateIp(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-gateway-ip">
+						Gateway IPv4
+					</Text>
+					<TextField.Root
+						id="private-gateway-ip"
+						placeholder="192.168.1.1"
+						value={privateGatewayIp}
+						onChange={(e) => setPrivateGatewayIp(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-vlan">
+						VLAN ID IPv4
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="private-vlan"
+						placeholder="0"
+						value={privateVlan}
+						onChange={(e) => setPrivateVlan(e.target.value)}
+					/>
+				</Flex>
+			</>)}
+
+			{privateNetworkMode === "static" && (<>
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-ip6">
+						Private IPv6
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="private-ip6"
+						placeholder="fd00::100/64"
+						value={privateIp6}
+						onChange={(e) => setPrivateIp6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-gateway-ip6">
+						Gateway IPv6
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="private-gateway-ip6"
+						placeholder="fd00::1"
+						value={privateGatewayIp6}
+						onChange={(e) => setPrivateGatewayIp6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-vlan6">
+						VLAN ID IPv6
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="private-vlan6"
+						placeholder="0"
+						value={privateVlan6}
+						onChange={(e) => setPrivateVlan6(e.target.value)}
+					/>
+				</Flex>
+
+				<Flex direction="column" gap="1">
+					<Text as="label" htmlFor="private-mtu">
+						Network MTU
+						<Text color="gray"> (Optional)</Text>
+					</Text>
+					<TextField.Root
+						id="private-mtu"
+						placeholder="1500"
+						value={privateMtu}
+						onChange={(e) => setPrivateMtu(e.target.value)}
+					/>
+				</Flex>
+			</>)}
+		</Flex>
+
+		body = <>
+			<Callout.Root variant="outline">
+				<Callout.Icon>
+					<Spinner size="2"/>
+				</Callout.Icon>
+				<Callout.Text>
+					<b>Installer waiting for configuration...</b>
+				</Callout.Text>
+			</Callout.Root>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="install-disks">
+					Select Install Disks
+				</Text>
+				<CheckboxCards.Root
+					id="install-disks"
+					defaultValue={[]}
+					columns="1"
+					size="1"
+					value={selectedDisks}
+					onValueChange={(selected: string[]) => {
+						setSelectedDisks(selected)
+					}}
+				>
+					{diskElms}
+				</CheckboxCards.Root>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="disk-size">
+					Root Filesystem Size
+					<Text color="gray"> (Leave Blank to Fill Disk)</Text>
+				</Text>
+				<TextField.Root
+					id="disk-size"
+					placeholder="50GB"
+					value={rootSize}
+					onChange={(e) => setRootSize(e.target.value)}
+				/>
+			</Flex>
+
+			<Flex direction="column" gap="1">
+				<Text as="label" htmlFor="raid-config">
+					RAID Configuration
+				</Text>
+				<Select.Root
+					value={raidConfig}
+					onValueChange={setRaidConfig}
+				>
+					<Select.Trigger id="raid-config"/>
+					<Select.Content>
+						<Select.Item value="-1">No RAID</Select.Item>
+						<Select.Item value="1">RAID 1</Select.Item>
+						<Select.Item value="10">RAID 10</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</Flex>
+
+			<Tabs.Root defaultValue="public">
+				<Tabs.List>
+					<Tabs.Trigger value="public">Public Network</Tabs.Trigger>
+					<Tabs.Trigger value="private">Private Network</Tabs.Trigger>
+				</Tabs.List>
+
+				<Box pt="3">
+					<Tabs.Content value="public">
+						{publicNetConf}
+					</Tabs.Content>
+					<Tabs.Content value="private">
+						{privateNetConf}
+					</Tabs.Content>
+				</Box>
+			</Tabs.Root>
+
+			<Flex direction="column" pt="3">
+				<Button
+					disabled={disabled}
+					onClick={() => {
+						setDisabled(true)
+
+						const payload = {
+							network_mode: networkMode,
+							bonded_network: bondedNetwork,
+							public_ip: publicIp,
+							gateway_ip: gatewayIp,
+							public_ip6: publicIp6,
+							gateway_ip6: gatewayIp6,
+							vlan: vlan ? parseInt(vlan, 10) : 0,
+							vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
+							mtu: mtu ? parseInt(mtu, 10) : 0,
+							interfaces: selectedIfaces,
+							private_network_mode: privateNetworkMode,
+							private_bonded_network: privateBondedNetwork,
+							private_ip: privateIp,
+							private_gateway_ip: privateGatewayIp,
+							private_ip6: privateIp6,
+							private_gateway_ip6: privateGatewayIp6,
+							private_vlan: privateVlan ? parseInt(privateVlan, 10) : 0,
+							private_vlan6: privateVlan6 ? parseInt(privateVlan6, 10) : 0,
+							private_mtu: privateMtu ? parseInt(privateMtu, 10) : 0,
+							private_interfaces: privateSelectedIfaces,
+							root_size: rootSize,
+							raid: parseInt(raidConfig, 10),
+							disks: selectedDisks,
 						}
-					}).catch((error) => {
-						setDisabled(false)
-						setErrorMsg(`Unknown error: ${error}`)
-					})
-				}}
-			>Start Install</Button>
+
+						fetch(`/${data.id}/install`, {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+							},
+							body: JSON.stringify(payload),
+						}).then(async (resp) => {
+							setDisabled(false)
+							if (!resp.ok) {
+								if (resp.status === 400) {
+									const errorData = await resp.json() as {
+										error: string
+									}
+									setErrorMsg(errorData.error || "Unknown error")
+								} else {
+									try {
+										const respText = await resp.text()
+										setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+									} catch {
+										setErrorMsg(`Unknown error: ${resp.status}`)
+									}
+								}
+							} else {
+								setStage("ready")
+							}
+						}).catch((error) => {
+							setDisabled(false)
+							setErrorMsg(`Unknown error: ${error}`)
+						})
+					}}
+				>Start Install</Button>
+			</Flex>
 		</>
 	}
 

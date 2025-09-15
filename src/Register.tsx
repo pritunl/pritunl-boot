@@ -355,66 +355,69 @@ function Register() {
 						</Text>
 					</Flex>
 
-					<Button
-						disabled={disabled}
-						onClick={() => {
-							setDisabled(true)
+					<Flex direction="column" pt="3">
+						<Button
+							disabled={disabled}
+							onClick={() => {
+								setDisabled(true)
 
-							const payload = {
-								distro: distro,
-								mode: setupMode,
-								secure: secure,
-								provider: provider,
-								network_mode: networkMode,
-								bonded_network: bondedNetwork,
-								public_ip: publicIp,
-								gateway_ip: gatewayIp,
-								public_ip6: publicIp6,
-								gateway_ip6: gatewayIp6,
-								vlan: vlan ? parseInt(vlan, 10) : 0,
-								vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
-								mtu: mtu ? parseInt(mtu, 10) : 0,
-								interface: bondedNetwork ? undefined : interfaceName,
-								root_size: rootSize,
-								raid: parseInt(raidConfig, 10),
-								ssh_keys: sshKeys,
-								long_url_key: longUrlKey,
-							}
-
-							fetch("/register", {
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
-								},
-								body: JSON.stringify(payload),
-							}).then(async (resp) => {
-								setDisabled(false)
-								if (!resp.ok) {
-									if (resp.status === 400) {
-										const errorData = await resp.json() as {
-											error: string
-										}
-										setErrorMsg(errorData.error || "Unknown error")
-									} else {
-										try {
-											const respText = await resp.text()
-											setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
-										} catch {
-											setErrorMsg(`Unknown error: ${resp.status}`)
-										}
-									}
-								} else {
-									const data = await resp.json() as {
-										id?: string
-									}
-									navigate(`/${data.id}/manage`)
+								const payload = {
+									distro: distro,
+									mode: setupMode,
+									secure: secure,
+									provider: provider,
+									network_mode: networkMode,
+									bonded_network: bondedNetwork,
+									public_ip: publicIp,
+									gateway_ip: gatewayIp,
+									public_ip6: publicIp6,
+									gateway_ip6: gatewayIp6,
+									vlan: vlan ? parseInt(vlan, 10) : 0,
+									vlan6: vlan6 ? parseInt(vlan6, 10) : 0,
+									mtu: mtu ? parseInt(mtu, 10) : 0,
+									interface: bondedNetwork ? undefined : interfaceName,
+									private_network_mode: "none",
+									root_size: rootSize,
+									raid: parseInt(raidConfig, 10),
+									ssh_keys: sshKeys,
+									long_url_key: longUrlKey,
 								}
-							}).catch((error) => {
-								setDisabled(false)
-								setErrorMsg(`Unknown error: ${error}`)
-							})
-						}}
-					>Generate iPXE Install</Button>
+
+								fetch("/register", {
+									method: "POST",
+									headers: {
+										"Content-Type": "application/json",
+									},
+									body: JSON.stringify(payload),
+								}).then(async (resp) => {
+									setDisabled(false)
+									if (!resp.ok) {
+										if (resp.status === 400) {
+											const errorData = await resp.json() as {
+												error: string
+											}
+											setErrorMsg(errorData.error || "Unknown error")
+										} else {
+											try {
+												const respText = await resp.text()
+												setErrorMsg(`Unknown error: ${resp.status} ${respText}`)
+											} catch {
+												setErrorMsg(`Unknown error: ${resp.status}`)
+											}
+										}
+									} else {
+										const data = await resp.json() as {
+											id?: string
+										}
+										navigate(`/${data.id}/manage`)
+									}
+								}).catch((error) => {
+									setDisabled(false)
+									setErrorMsg(`Unknown error: ${error}`)
+								})
+							}}
+						>Generate iPXE Install</Button>
+					</Flex>
 
 					<Flex gap="2" direction={{initial: "column", xs: "row"}} wrap="wrap">
 						<Button
