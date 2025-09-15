@@ -91,6 +91,135 @@ export function validateConfiguration(
 		data.mtu = 0
 	}
 
+	if (data.private_network_mode !== "none") {
+		if (!data.network_mode || !["static", "dhcp"].includes(data.network_mode)) {
+			throw new Types.ValidationError("Invalid network_mode")
+		}
+
+		if (!data.bonded_network) {
+			data.bonded_network = false
+		} else if (typeof data.bonded_network !== "boolean") {
+			throw new Types.ValidationError("Invalid bonded_network format")
+		}
+
+		if (!data.private_network_mode || !["static", "dhcp"].includes(data.private_network_mode)) {
+			throw new Types.ValidationError("Invalid private_network_mode")
+		}
+
+		if (!data.private_bonded_network) {
+			data.private_bonded_network = false
+		} else if (typeof data.private_bonded_network !== "boolean") {
+			throw new Types.ValidationError("Invalid private_bonded_network format")
+		}
+
+		if (data.interface && !isValidInterfaceName(data.interface)) {
+			throw new Types.ValidationError("Invalid interface name format")
+		}
+
+		if (data.interfaces) {
+			data.interfaces.forEach((iface: string) => {
+				if (!isValidMAC(iface)) {
+					throw new Types.ValidationError("Invalid interface in interfaces")
+				}
+			})
+		} else {
+			data.interfaces = []
+		}
+
+		if (data.private_interfaces) {
+			data.private_interfaces.forEach((iface: string) => {
+				if (!isValidMAC(iface)) {
+					throw new Types.ValidationError("Invalid interface in private_interfaces")
+				}
+			})
+		} else {
+			data.private_interfaces = []
+		}
+
+		if (install && data.interfaces.length < 1) {
+			throw new Types.ValidationError("Missing required interfaces")
+		}
+
+		if (data.network_mode === "static") {
+			if (data.public_ip && !isValidIPv4CIDR(data.public_ip)) {
+				throw new Types.ValidationError("Invalid public_ip format")
+			}
+			if (data.gateway_ip && !isValidIPv4(data.gateway_ip)) {
+				throw new Types.ValidationError("Invalid gateway_ip format")
+			}
+
+			if (data.public_ip6 && !isValidIPv6CIDR(data.public_ip6)) {
+				throw new Types.ValidationError("Invalid public_ip6 format")
+			}
+			if (data.gateway_ip6 && !isValidIPv6(data.gateway_ip6)) {
+				throw new Types.ValidationError("Invalid gateway_ip6 format")
+			}
+
+			if (data.vlan && !isValidVLAN(data.vlan)) {
+				throw new Types.ValidationError("Invalid VLAN ID for IPv4")
+			}
+			if (data.vlan6 && !isValidVLAN(data.vlan6)) {
+				throw new Types.ValidationError("Invalid VLAN ID for IPv6")
+			}
+			if (data.mtu && !isValidMtu(data.mtu)) {
+				throw new Types.ValidationError("Invalid network MTU")
+			}
+		} else {
+			data.public_ip = ""
+			data.gateway_ip = ""
+			data.public_ip6 = ""
+			data.gateway_ip6 = ""
+			data.vlan = 0
+			data.vlan6 = 0
+			data.mtu = 0
+		}
+
+		if (data.private_network_mode === "static") {
+			if (data.private_ip && !isValidIPv4CIDR(data.private_ip)) {
+				throw new Types.ValidationError("Invalid private_ip format")
+			}
+			if (data.private_gateway_ip && !isValidIPv4(data.private_gateway_ip)) {
+				throw new Types.ValidationError("Invalid private_gateway_ip format")
+			}
+
+			if (data.private_ip6 && !isValidIPv6CIDR(data.private_ip6)) {
+				throw new Types.ValidationError("Invalid private_ip6 format")
+			}
+			if (data.private_gateway_ip6 && !isValidIPv6(data.private_gateway_ip6)) {
+				throw new Types.ValidationError("Invalid private_gateway_ip6 format")
+			}
+
+			if (data.private_vlan && !isValidVLAN(data.private_vlan)) {
+				throw new Types.ValidationError("Invalid private VLAN ID for IPv4")
+			}
+			if (data.private_vlan6 && !isValidVLAN(data.private_vlan6)) {
+				throw new Types.ValidationError("Invalid private VLAN ID for IPv6")
+			}
+			if (data.private_mtu && !isValidMtu(data.private_mtu)) {
+				throw new Types.ValidationError("Invalid private network MTU")
+			}
+		} else {
+			data.private_ip = ""
+			data.private_gateway_ip = ""
+			data.private_ip6 = ""
+			data.private_gateway_ip6 = ""
+			data.private_vlan = 0
+			data.private_vlan6 = 0
+			data.private_mtu = 0
+		}
+	} else {
+		data.private_network_mode = "none"
+		data.private_bonded_network = false
+		data.private_ip = ""
+		data.private_gateway_ip = ""
+		data.private_ip6 = ""
+		data.private_gateway_ip6 = ""
+		data.private_vlan = 0
+		data.private_vlan6 = 0
+		data.private_mtu = 0
+		data.private_interfaces = []
+	}
+
 	if (data.root_size && data.root_size !== "") {
 		data.root_size = data.root_size.toUpperCase()
 		const rootSizeRegex = /^\d+GB$/
@@ -153,6 +282,16 @@ export function validateConfiguration(
 		gateway_ip: data.gateway_ip,
 		public_ip6: data.public_ip6,
 		gateway_ip6: data.gateway_ip6,
+		private_network_mode: data.private_network_mode,
+		private_bonded_network: data.private_bonded_network,
+		private_ip: data.private_ip,
+		private_gateway_ip: data.private_gateway_ip,
+		private_ip6: data.private_ip6,
+		private_gateway_ip6: data.private_gateway_ip6,
+		private_vlan: data.private_vlan,
+		private_vlan6: data.private_vlan6,
+		private_mtu: data.private_mtu,
+		private_interfaces: data.private_interfaces,
 		vlan: data.vlan,
 		vlan6: data.vlan6,
 		mtu: data.mtu,

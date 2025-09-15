@@ -310,6 +310,186 @@ nmcli connection up ${vlanIface6}
 `
 	}
 
+    if (data.private_network_mode !== "none") {
+        conf += generateKickstartPrivateNetwork(data, escape, nmConns)
+    }
+
+	return conf
+}
+
+function generateKickstartPrivateNetwork(data: Types.Configuration,
+	escape: boolean = true, nmConns: Set<string>): string {
+
+	let conf = ""
+	let rootIface = ""
+	let rootMac = ""
+	let esc = escape ? "\\" : ""
+
+	if (data.private_bonded_network && data.private_interfaces &&
+			data.private_interfaces.length >= 2) {
+
+		if (data.private_bonded_network &&
+			Utils.arrayMatch(data.interfaces, data.private_interfaces)) {
+
+			rootIface = "bond0"
+		} else {
+			rootIface = "bond1"
+			let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
+			if (data.mtu) {
+				bondOpts += `,mtu=${data.mtu}`
+			}
+
+			conf += `
+nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
+			data.private_interfaces.forEach((_iface: string, index: number) => {
+				nmConns.add(`${rootIface}-slave${index}`)
+				conf += `
+nmcli connection add type bond-slave con-name ${rootIface}-slave${index} ifname "${esc}$INTERFACE${index}" master ${rootIface}`
+			})
+		}
+	} else {
+		if (data.private_interfaces) {
+			rootMac = data.private_interfaces[0]
+			rootIface = `"${esc}$PRIVATE_INTERFACE0"`
+		} else {
+			rootMac = data.private_interfaces || ""
+			rootIface = `"${esc}$PRIVATE_INTERFACE"`
+		}
+
+		if (!nmConns.has(rootMac)) {
+			conf += `
+nmcli connection add type ethernet con-name ${rootIface} ifname ${rootIface} connection.autoconnect yes`
+		}
+
+		if (data.private_mtu) {
+			conf += `
+nmcli connection modify ${rootIface} 802-3-ethernet.mtu ${data.private_mtu}`
+		}
+	}
+
+	if (data.private_vlan && data.private_vlan6 && !nmConns.has(rootMac)) {
+		conf += `
+nmcli connection modify ${rootIface} ipv4.method disabled ipv6.method ignore`
+	} else {
+		if (!data.private_vlan) {
+			if (data.private_network_mode === "static") {
+				conf += `
+nmcli connection modify ${rootIface} ipv4.method manual +ipv4.addresses ${data.private_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+				if (data.private_gateway_ip) {
+					conf += `
+nmcli connection modify ${rootIface} +ipv4.gateway ${data.private_gateway_ip}`
+				}
+			} else {
+				conf += `
+nmcli connection modify ${rootIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+			}
+		} else if (!nmConns.has(rootMac)) {
+			conf += `
+nmcli connection modify ${rootIface} ipv4.method disabled`
+		}
+
+		if (!data.private_vlan6) {
+			if (data.private_network_mode === "static" && data.private_ip6) {
+				if (data.private_gateway_ip6) {
+					conf += `
+nmcli connection modify ${rootIface} ipv6.method manual +ipv6.addresses ${data.private_ip6} +ipv6.gateway ${data.private_gateway_ip6}`
+				} else {
+					conf += `
+nmcli connection modify ${rootIface} +ipv6.addresses ${data.private_ip6}`
+				}
+			} else if (!nmConns.has(rootMac)) {
+				conf += `
+nmcli connection modify ${rootIface} ipv6.method auto`
+			}
+		} else if (!nmConns.has(rootMac)) {
+			conf += `
+nmcli connection modify ${rootIface} ipv6.method ignore`
+		}
+	}
+
+	conf += `
+nmcli connection up ${rootIface}
+sleep 1
+`
+
+	if (data.private_vlan) {
+		let vlanIface = `${rootIface}.${data.private_vlan}`
+
+		if (!nmConns.has(`${rootMac}.${data.private_vlan}`)) {
+			conf += `
+nmcli connection add type vlan con-name ${vlanIface} ifname ${vlanIface} dev ${rootIface} id ${data.private_vlan} connection.autoconnect yes`
+		}
+
+		if (data.private_mtu) {
+			conf += `
+nmcli connection modify ${vlanIface} mtu ${data.private_mtu}`
+		}
+
+		if (data.private_network_mode === "static") {
+			conf += `
+nmcli connection modify ${vlanIface} ipv4.method manual +ipv4.addresses ${data.private_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+			if (data.private_gateway_ip) {
+				conf += `
+nmcli connection modify ${vlanIface} +ipv4.gateway ${data.private_gateway_ip}`
+			}
+		} else {
+			conf += `
+nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
+		}
+
+		if (data.private_vlan === data.private_vlan6) {
+			if (data.private_network_mode === "static" && data.private_ip6) {
+				if (data.private_gateway_ip6) {
+					conf += `
+nmcli connection modify ${vlanIface} ipv6.method manual +ipv6.addresses ${data.private_ip6} +ipv6.gateway ${data.private_gateway_ip6}`
+				} else {
+					conf += `
+nmcli connection modify ${vlanIface} +ipv6.addresses ${data.private_ip6}`
+				}
+			} else if (!nmConns.has(`${rootMac}.${data.private_vlan}`)) {
+				conf += `
+nmcli connection modify ${vlanIface} ipv6.method auto`
+			}
+		} else if (!nmConns.has(`${rootMac}.${data.private_vlan}`)) {
+			conf += `
+nmcli connection modify ${vlanIface} ipv6.method ignore`
+		}
+
+		conf += `
+nmcli connection up ${vlanIface}
+`
+	}
+
+	if (data.private_vlan6 && data.private_vlan6 !== data.private_vlan) {
+		let vlanIface6 = `${rootIface}.${data.private_vlan6}`
+		if (!nmConns.has(`${rootMac}.${data.private_vlan6}`)) {
+			conf += `
+nmcli connection add type vlan con-name ${vlanIface6} ifname ${vlanIface6} dev ${rootIface} id ${data.private_vlan6} ipv4.method disabled connection.autoconnect yes`
+		}
+
+		if (data.private_mtu) {
+			conf += `
+nmcli connection modify ${vlanIface6} mtu ${data.private_mtu}`
+		}
+
+		if (data.private_network_mode === "static" && data.private_ip6) {
+			if (data.private_gateway_ip6) {
+				conf += `
+nmcli connection modify ${vlanIface6} ipv6.method manual +ipv6.addresses ${data.private_ip6} +ipv6.gateway ${data.private_gateway_ip6}`
+			} else {
+				conf += `
+nmcli connection modify ${vlanIface6} +ipv6.addresses ${data.private_ip6}`
+			}
+		} else if (!nmConns.has(`${rootMac}.${data.private_vlan6}`)) {
+			conf += `
+nmcli connection modify ${vlanIface6} ipv6.method auto`
+		}
+
+		conf += `
+nmcli connection up ${vlanIface6}
+`
+	}
+
 	return conf
 }
 

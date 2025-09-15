@@ -306,10 +306,20 @@ async function postInstall(request: Request,
 	register.vlan = payload.vlan
 	register.vlan6 = payload.vlan6
 	register.mtu = payload.mtu
+	register.interfaces = payload.interfaces
+	register.private_network_mode = payload.private_network_mode
+	register.private_bonded_network = payload.private_bonded_network
+	register.private_ip = payload.private_ip
+	register.private_gateway_ip = payload.private_gateway_ip
+	register.private_ip6 = payload.private_ip6
+	register.private_gateway_ip6 = payload.private_gateway_ip6
+	register.private_vlan = payload.private_vlan
+	register.private_vlan6 = payload.private_vlan6
+	register.private_mtu = payload.private_mtu
+	register.private_interfaces = payload.private_interfaces
 	register.root_size = payload.root_size
 	register.raid = payload.raid
 	register.disks = payload.disks
-	register.interfaces = payload.interfaces
 
 	try {
 		data = Validation.validateConfiguration(register, true)

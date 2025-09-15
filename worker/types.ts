@@ -20,12 +20,22 @@ export interface Configuration {
 	vlan: number
 	vlan6: number
 	mtu: number
+	interfaces?: string[]
+	private_network_mode: "static" | "dhcp" | "none"
+	private_bonded_network: boolean
+	private_ip: string
+	private_gateway_ip: string
+	private_ip6: string
+	private_gateway_ip6: string
+	private_vlan: number
+	private_vlan6: number
+	private_mtu: number
+	private_interfaces?: string[]
 	interface?: string
 	root_size: string
 	raid: number
 	ssh_keys: string
 	disks?: string[]
-	interfaces?: string[]
 	long_url_key: boolean
 }
 
