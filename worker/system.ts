@@ -958,7 +958,7 @@ curl -v -X POST --data "$POST_DATA" "${Config.BaseUrl}/${data.id}/system"
 
 poll_disk_decode() {
     local url="${Config.BaseUrl}/${data.id}/disks"
-    local max_wait=600
+    local max_wait=900
     local response_file=$(mktemp)
 
     echo "=== Waiting for disk configuration ===" >&2
