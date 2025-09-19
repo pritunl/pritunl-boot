@@ -119,6 +119,8 @@ function Manage() {
 					if (resp.status === 400) {
 						const errorData = await resp.json() as Error
 						setErrorMsg(errorData.error || "Unknown error")
+					} else if (resp.status === 404) {
+							setErrorMsg("Token has expired")
 					} else {
 						try {
 							const respText = await resp.text()
@@ -144,6 +146,8 @@ function Manage() {
 				if (resp.status === 400) {
 					const errorData = await resp.json() as Error
 					setErrorMsg(errorData.error || "Unknown error")
+				} else if (resp.status === 404) {
+						setErrorMsg("Token has expired")
 				} else {
 					try {
 						const respText = await resp.text()
@@ -172,6 +176,8 @@ function Manage() {
 				if (resp.status === 400) {
 					const errorData = await resp.json() as Error
 					setErrorMsg(errorData.error || "Unknown error")
+				} else if (resp.status === 404) {
+						setErrorMsg("Token has expired")
 				} else {
 					try {
 						const respText = await resp.text()
@@ -740,6 +746,8 @@ function Manage() {
 										error: string
 									}
 									setErrorMsg(errorData.error || "Unknown error")
+								} else if (resp.status === 404) {
+										setErrorMsg("Token has expired")
 								} else {
 									try {
 										const respText = await resp.text()
