@@ -397,6 +397,8 @@ function Register() {
 												error: string
 											}
 											setErrorMsg(errorData.error || "Unknown error")
+										} else if (resp.status === 404) {
+												setErrorMsg("Token has expired")
 										} else {
 											try {
 												const respText = await resp.text()
