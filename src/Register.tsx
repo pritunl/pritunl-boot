@@ -454,7 +454,7 @@ function Register() {
 							variant="outline"
 							style={{flexGrow: 1, flexBasis: "auto"}}
 						>
-							<Link href="https://docs.pritunl.com/boot">
+							<Link href="https://docs.pritunl.com/kb/boot">
 								Documentation
 							</Link>
 						</Button>
