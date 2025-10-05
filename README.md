@@ -58,6 +58,7 @@ tee config/local/general.h << 'EOF'
  * Banner timeout configuration
  *
  */
+#undef BANNER_TIMEOUT
 #define BANNER_TIMEOUT          100
 
 /*
