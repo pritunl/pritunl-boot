@@ -55,4 +55,4 @@ repo --name="updates" --baseurl="https://iad.mirror.rackspace.com/fedora/updates
 }
 
 export const IpxeUrl = "https://pxe.pritunl.com/ipxe.iso"
-export const IpxeHash = "1a4deb6d0107d831331da286f8c252f945088880075c4bb0925c23b52f04451d"
+export const IpxeHash = "65c60cffe1f578ffa7ce909e3e1ac57fe7eae241cf274194b45d19c89f7391de"
