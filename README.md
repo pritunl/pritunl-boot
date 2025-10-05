@@ -25,6 +25,15 @@ After installation the post install script log is available at
 `/root/ks-post.log` and the network configuration log at
 `journalctl -u network-migration.service`.
 
+## iPXE
+
+An iPXE build is available with HTTPS support for EFI systems.
+
+```bash
+wget https://pxe.pritunl.com/ipxe.iso
+echo "65c60cffe1f578ffa7ce909e3e1ac57fe7eae241cf274194b45d19c89f7391de  ipxe.iso" | sha256sum -c -
+```
+
 ## Building
 
 ```bash
