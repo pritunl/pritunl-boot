@@ -663,7 +663,7 @@ function Manage() {
 					id="disk-size"
 					placeholder="50GB"
 					value={rootSize}
-					onChange={(e) => setRootSize(e.target.value)}
+					onChange={(e) => setRootSize(e.target.value.toUpperCase())}
 				/>
 			</Flex>
 
