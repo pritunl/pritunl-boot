@@ -549,7 +549,7 @@ curl -X POST ${Config.BaseUrl}/${data.id}/stage/pre || true
 echo "=== Scanning for install disks ==="
 
 DISKS=()
-for disk in /sys/block/sd* /sys/block/nvme*n1 /sys/block/vd* /sys/block/mmc*; do
+for disk in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd* /sys/block/mmc*; do
     if [ ! -e "$disk" ]; then
         continue
     fi
@@ -864,7 +864,7 @@ echo "=== Scanning for install disks ==="
 POST_DATA="kernel=$(uname -r)"
 
 disk_index=0
-for disk in /sys/block/sd* /sys/block/nvme*n1 /sys/block/vd* /sys/block/mmc*; do
+for disk in /sys/block/sd* /sys/block/nvme*n* /sys/block/vd* /sys/block/mmc*; do
     if [ ! -e "$disk" ]; then
         continue
     fi
