@@ -43,7 +43,7 @@ cd pritunl-boot
 npm install
 npx wrangler login --browser=false
 npm run dev
-rpm run deploy
+npm run deploy
 ```
 
 ## Building iPXE
