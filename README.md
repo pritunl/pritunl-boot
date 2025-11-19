@@ -41,7 +41,7 @@ sudo dnf -y install git-core npm
 git clone https://github.com/pritunl/pritunl-boot.git
 cd pritunl-boot
 npm install
-npx wrangler
+npx wrangler login --browser=false
 npm run dev
 rpm run deploy
 ```
