@@ -799,8 +799,8 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-#passwd -d root
-#passwd -l root
+passwd -d root
+passwd -l root
 passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
@@ -1201,8 +1201,8 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-#passwd -d root
-#passwd -l root
+passwd -d root
+passwd -l root
 passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
