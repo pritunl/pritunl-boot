@@ -495,6 +495,7 @@ nmcli connection up ${vlanIface6}
 
 export function generateKickstart(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
+	const passwd = Utils.generateId(32)
 
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	let publicMacFunc = ""
@@ -539,7 +540,7 @@ firstboot --enable
 
 timezone Etc/UTC --utc
 
-rootpw --plaintext cloud
+rootpw --plaintext ${passwd}
 
 %pre
 #!/bin/bash
@@ -836,6 +837,7 @@ curl -X POST ${Config.BaseUrl}/${data.id}/stage/reboot || true
 export function generateKickstartLive(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
+	const passwd = Utils.generateId(32)
 
 	return `text
 reboot
@@ -853,7 +855,7 @@ firstboot --enable
 
 timezone Etc/UTC --utc
 
-rootpw --plaintext cloud
+rootpw --plaintext ${passwd}
 
 %pre
 #!/bin/bash
