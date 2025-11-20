@@ -204,8 +204,13 @@ nmcli connection modify ${rootIface} ipv4.method disabled ipv6.method ignore`
 	} else {
 		if (!data.vlan) {
 			if (data.network_mode === "static") {
-				conf += `
+				if (data.gateway_ip) {
+					conf += `
 nmcli connection modify ${rootIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.gateway ${data.gateway_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+				} else {
+					conf += `
+nmcli connection modify ${rootIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+				}
 			} else {
 				conf += `
 nmcli connection modify ${rootIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
@@ -251,8 +256,13 @@ nmcli connection modify ${vlanIface} mtu ${data.mtu}`
 		}
 
 		if (data.network_mode === "static") {
-			conf += `
+			if (data.gateway_ip) {
+				conf += `
 nmcli connection modify ${vlanIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.gateway ${data.gateway_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+			} else {
+				conf += `
+nmcli connection modify ${vlanIface} ipv4.method manual ipv4.addresses ${data.public_ip} ipv4.dns "8.8.8.8,8.8.4.4"`
+			}
 		} else {
 			conf += `
 nmcli connection modify ${vlanIface} ipv4.method auto ipv4.dns "8.8.8.8,8.8.4.4"`
