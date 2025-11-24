@@ -1,6 +1,7 @@
 import { useState } from "react"
 import logo from "./assets/logo.png"
 import * as Router from "./router"
+import * as Config from "../worker/config"
 import {
 	Box, Container,
 	Heading, Flex,
@@ -43,6 +44,7 @@ function Register() {
 	const [raidConfig, setRaidConfig] = useState("-1")
 	const [sshKeys, setSshKeys] = useState("")
 	const [longUrlKey, setLongUrlKey] = useState(false)
+	const [ipxeHash, setIpxeHash] = useState(false)
 
 	return (
 		<Box>
@@ -427,7 +429,18 @@ function Register() {
 							variant="outline"
 							style={{flexGrow: 1, flexBasis: "auto"}}
 						>
-							<Link href="https://pxe.pritunl.com/ipxe.iso">
+							<Link
+								href="https://pxe.pritunl.com/ipxe.iso"
+								onClick={() => {
+									setIpxeHash(true)
+								}}
+								onMouseDown={() => {
+									setIpxeHash(true)
+								}}
+								onTouchStart={() => {
+									setIpxeHash(true)
+								}}
+							>
 								Download iPXE
 							</Link>
 						</Button>
@@ -459,6 +472,20 @@ function Register() {
 							</Link>
 						</Button>
 					</Flex>
+
+					{ipxeHash && (<>
+						<Flex direction="column">
+							<Text
+								color="gray"
+								align="center"
+								style={{
+									margin: "0 -10px",
+									fontFamily: "Roboto Mono",
+									fontSize: "10px",
+								}}
+							>{Config.IpxeHash} ipxe.iso</Text>
+						</Flex>
+					</>)}
 				</Flex>
 			</Container>
 			<AlertDialog.Root open={!!errorMsg}>
