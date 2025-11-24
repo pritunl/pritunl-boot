@@ -29,12 +29,12 @@ export default {
 						return getKs(request, env, match[1])
 					}
 				}
-				if (url.pathname.endsWith("/clear") &&
+				if (url.pathname.endsWith("/delete") &&
 					request.method == "GET") {
 
-					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/clear$/)
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/delete$/)
 					if (match && match[1]) {
-						return getClear(request, env, match[1])
+						return getDelete(request, env, match[1])
 					}
 				}
 				if (url.pathname.endsWith("/system") &&
@@ -171,7 +171,7 @@ async function postRegister(request: Request,
 	})
 }
 
-async function getClear(_request: Request, env: Types.Env,
+async function getDelete(_request: Request, env: Types.Env,
 	id: string): Promise<Response> {
 
 	const objId = env.BOOT.idFromName(id)
