@@ -19,7 +19,10 @@ app, the configuration will be applied to the installation.
 ## Debugging
 
 During installation use `Alt+F2` to access the console then check the log
-files in `/tmp/<ks-log>`.
+files in `/tmp/ks-script-<id>.log`.
+
+If the log file is empty attempt to run the script in the foreground using
+`/bin/bash /tmp/ks-script-<id>`.
 
 After installation the post install script log is available at
 `/root/ks-post.log` and the network configuration log at
