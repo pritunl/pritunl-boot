@@ -332,11 +332,11 @@ export function validateSystem(data: Types.System): Types.System {
 		}
 
 		if (typeof disk.model !== "string") {
-			throw new Types.ValidationError(`Invalid disk model at index ${index}`)
+			disk.model = "Unknown"
 		}
 
 		if (typeof disk.serial !== "string") {
-			throw new Types.ValidationError(`Invalid disk serial at index ${index}`)
+			disk.model = "Unknown"
 		}
 
 		disks.push({
@@ -372,8 +372,7 @@ export function validateSystem(data: Types.System): Types.System {
 		}
 
 		if (!iface.model || typeof iface.model !== "string") {
-			throw new Types.ValidationError(
-				`Invalid interface model at index ${index}`)
+			iface.model = "Unknown"
 		}
 
 		interfaces.push({
