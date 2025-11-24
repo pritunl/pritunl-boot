@@ -29,6 +29,14 @@ export default {
 						return getKs(request, env, match[1])
 					}
 				}
+				if (url.pathname.endsWith("/clear") &&
+					request.method == "GET") {
+
+					const match = url.pathname.match(/^\/([a-zA-Z0-9]+)\/clear$/)
+					if (match && match[1]) {
+						return getClear(request, env, match[1])
+					}
+				}
 				if (url.pathname.endsWith("/system") &&
 					request.method == "POST") {
 
@@ -160,6 +168,19 @@ async function postRegister(request: Request,
 
 	return Response.json({
 		id: data.id,
+	})
+}
+
+async function getClear(_request: Request, env: Types.Env,
+	id: string): Promise<Response> {
+
+	const objId = env.BOOT.idFromName(id)
+	const db = env.BOOT.get(objId)
+	await db.delete()
+
+	return new Response(
+		"ok",
+		{headers: {"Content-Type": "text/plain"},
 	})
 }
 

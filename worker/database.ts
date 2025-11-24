@@ -15,6 +15,10 @@ export class Boot extends DurableObject<Types.Env> {
 		return true
 	}
 
+	async delete() {
+		await this.ctx.storage.deleteAll()
+	}
+
 	async ttl(hours = 2) {
 		const expirationTime = Date.now() + (hours * 60 * 60 * 1000)
 		await this.ctx.storage.setAlarm(expirationTime)

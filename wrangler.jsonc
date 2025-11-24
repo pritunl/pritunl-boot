@@ -8,6 +8,7 @@
 		"run_worker_first": [
 			"/*.ipxe",
 			"/*.ks",
+			"/*/clear",
 			"/*/system",
 			"/*/data",
 			"/*/install",
