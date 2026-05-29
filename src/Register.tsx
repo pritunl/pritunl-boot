@@ -97,7 +97,7 @@ function Register() {
 								<Select.Item value="fedora">
 									<Flex as="span" align="center" gap="2">
 										<span style={css.logo} className="fedora-logo"/>
-										<span>Fedora Server 43</span>
+										<span>Fedora Server 44</span>
 									</Flex>
 								</Select.Item>
 							</Select.Content>
