@@ -657,8 +657,8 @@ part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.21 --ondisk=\${DISKS[0]} ${rootSize} --grow
 part raid.22 --ondisk=\${DISKS[1]} ${rootSize} --grow
-raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
-raid / --level=1 --device=md1 raid.21 raid.22 --fstype="xfs"
+raid /boot/efi --level=1 --device=boot_efi raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
+raid / --level=1 --device=root raid.21 raid.22 --fstype="xfs"
 EOF
 elif [ "$RAID" = "10" ]; then
   tee /tmp/storage.ks << EOF
@@ -674,8 +674,8 @@ part raid.21 --ondisk=\${DISKS[0]} ${rootSize} --grow
 part raid.22 --ondisk=\${DISKS[1]} ${rootSize} --grow
 part raid.23 --ondisk=\${DISKS[2]} ${rootSize} --grow
 part raid.24 --ondisk=\${DISKS[3]} ${rootSize} --grow
-raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
-raid / --level=10 --device=md1 raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
+raid /boot/efi --level=1 --device=boot_efi raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
+raid / --level=10 --device=root raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
 EOF
 else
   tee /tmp/storage.ks << EOF
@@ -1084,8 +1084,8 @@ part raid.11 --fstype="efi" --ondisk=\${DISKS[0]} --size=100 --fsoptions="umask=
 part raid.12 --fstype="efi" --ondisk=\${DISKS[1]} --size=100 --fsoptions="umask=0077,shortname=winnt"
 part raid.21 --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
 part raid.22 --ondisk=\${DISKS[1]} $ROOT_SIZE --grow
-raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
-raid / --level=1 --device=md1 raid.21 raid.22 --fstype="xfs"
+raid /boot/efi --level=1 --device=boot_efi raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
+raid / --level=1 --device=root raid.21 raid.22 --fstype="xfs"
 EOF
 elif [ "$RAID" = "10" ]; then
   tee /tmp/storage.ks << EOF
@@ -1101,8 +1101,8 @@ part raid.21 --ondisk=\${DISKS[0]} $ROOT_SIZE --grow
 part raid.22 --ondisk=\${DISKS[1]} $ROOT_SIZE --grow
 part raid.23 --ondisk=\${DISKS[2]} $ROOT_SIZE --grow
 part raid.24 --ondisk=\${DISKS[3]} $ROOT_SIZE --grow
-raid /boot/efi --level=1 --device=md0 raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
-raid / --level=10 --device=md1 raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
+raid /boot/efi --level=1 --device=boot_efi raid.11 raid.12 --fstype="efi" --fsoptions="umask=0077,shortname=winnt"
+raid / --level=10 --device=root raid.21 raid.22 raid.23 raid.24 --fstype="xfs"
 EOF
 else
   tee /tmp/storage.ks << EOF
