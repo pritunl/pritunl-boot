@@ -18,9 +18,9 @@ export const Distros: Record<string, Distro> = {
 		repo_conf: `url --url="https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/"
 repo --name="AppStream" --baseurl="https://repo.almalinux.org/almalinux/10/AppStream/x86_64/os/"`,
 		kernel_url: "https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz",
-		kernel_hash: "1e93b0129511f8fcea90b2c32f1eb554d9014b3b0b66e2cdb30cea6e3f230dee",
+		kernel_hash: "90ee8394588e78eed5136fa484a2b49c6a9e70960356b046c1b90a5a6f449f7d",
 		initrd_url: "https://repo.almalinux.org/almalinux/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
-		initrd_hash: "27bd2b2003c2970ea94eb44318d9e24d2858725340e8fff7536960c21c35a3a8",
+		initrd_hash: "e1b5b7f627a0d2982981521e3dd550a8f51e40d08b3e9318763d2c7ce273b3a9",
 	},
 	"oraclelinux10": {
 		repo_url: "https://yum.oracle.com/repo/OracleLinux/OL10/baseos/latest/x86_64/",
@@ -39,9 +39,9 @@ repo --name="ol10_appstream" --baseurl="https://yum.oracle.com/repo/OracleLinux/
 		repo_conf: `url --url="https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/"
 repo --name="AppStream" --baseurl="https://dl.rockylinux.org/pub/rocky/10/AppStream/x86_64/os/"`,
 		kernel_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz",
-		kernel_hash: "1e93b0129511f8fcea90b2c32f1eb554d9014b3b0b66e2cdb30cea6e3f230dee",
+		kernel_hash: "bdbe11aa10d1dce86d89e65e2f8476f78f47968b8045b20fa0f0aace82b77d77",
 		initrd_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
-		initrd_hash: "27bd2b2003c2970ea94eb44318d9e24d2858725340e8fff7536960c21c35a3a8",
+		initrd_hash: "ba5d8f6e40467b0c25590b0abeca6008b36093b696d649bfa53c7e8edc3fc37d",
 	},
 	"fedora": {
 		repo_url: "https://iad.mirror.rackspace.com/fedora/releases/44/Server/x86_64/os/",
