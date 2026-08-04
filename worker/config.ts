@@ -39,9 +39,9 @@ repo --name="ol10_appstream" --baseurl="https://yum.oracle.com/repo/OracleLinux/
 		repo_conf: `url --url="https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/"
 repo --name="AppStream" --baseurl="https://dl.rockylinux.org/pub/rocky/10/AppStream/x86_64/os/"`,
 		kernel_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/vmlinuz",
-		kernel_hash: "bdbe11aa10d1dce86d89e65e2f8476f78f47968b8045b20fa0f0aace82b77d77",
+		kernel_hash: "1d3cca6870442d139785037fc67a780f26f391fcc3617b3686eec9da750acbbb",
 		initrd_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
-		initrd_hash: "ba5d8f6e40467b0c25590b0abeca6008b36093b696d649bfa53c7e8edc3fc37d",
+		initrd_hash: "d29f598e370b097be550310f24462ffcd5645466da3b117124839c43d8c8a5f7",
 	},
 	"fedora": {
 		repo_url: "https://iad.mirror.rackspace.com/fedora/releases/44/Server/x86_64/os/",
