@@ -138,17 +138,28 @@ function Register() {
 						</Text>
 						<Select.Root
 							value={provider}
-							onValueChange={setProvider}
+							onValueChange={(val) => {
+								setProvider(val)
+								if (val === "phoenix") {
+									setNetworkMode("static")
+								}
+							}}
 						>
 							<Select.Trigger id="provider"/>
 							<Select.Content>
 								<Select.Item value="none">None</Select.Item>
+								<Select.Item value="phoenix">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="phoenix-logo"/>
+										<span>phoenixNAP</span>
+									</Flex>
+								</Select.Item>
 								<Select.Item value="latitude">
 									<Flex as="span" align="center" gap="2">
 										<span style={css.logo} className="latitude-logo"/>
 										<span>Latitude.sh</span>
 									</Flex>
-									</Select.Item>
+								</Select.Item>
 								<Select.Item value="vultr">
 									<Flex as="span" align="center" gap="2">
 										<span style={css.logo} className="vultr-logo"/>
@@ -159,7 +170,7 @@ function Register() {
 						</Select.Root>
 					</Flex>
 
-					{!["latitude", "vultr"].includes(provider) && (<>
+					{!["latitude", "vultr", "phoenix"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="network-config">
 								Network Configuration
@@ -216,18 +227,20 @@ function Register() {
 							/>
 						</Flex>
 
-						<Flex direction="column" gap="1">
-							<Text as="label" htmlFor="vlan">
-								VLAN ID IPv4
-								<Text color="gray"> (Optional)</Text>
-							</Text>
-							<TextField.Root
-								id="vlan"
-								placeholder="0"
-								value={vlan}
-								onChange={(e) => setVlan(e.target.value)}
-							/>
-						</Flex>
+						{provider !== "phoenix" && (
+							<Flex direction="column" gap="1">
+								<Text as="label" htmlFor="vlan">
+									VLAN ID IPv4
+									<Text color="gray"> (Optional)</Text>
+								</Text>
+								<TextField.Root
+									id="vlan"
+									placeholder="0"
+									value={vlan}
+									onChange={(e) => setVlan(e.target.value)}
+								/>
+							</Flex>
+						)}
 					</>)}
 
 					{setupMode === "static" && networkMode === "static" &&
@@ -286,7 +299,7 @@ function Register() {
 					</>)}
 
 					{(setupMode === "live" || !bondedNetwork) &&
-							!["latitude", "vultr"].includes(provider) && (<>
+							!["latitude", "vultr", "phoenix"].includes(provider) && (<>
 						<Flex direction="column" gap="1">
 							<Text as="label" htmlFor="interface">
 								Interface Name
