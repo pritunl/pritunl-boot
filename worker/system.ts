@@ -793,8 +793,7 @@ ${networkScript}
 sleep 5
 
 curl -4 -sS -f --max-time 10 --retry 8 --retry-delay 2 --retry-all-errors -X POST \
-  ${Config.BaseUrl}/${data.id}/stage/complete \
-  || echo "stage-complete callback failed"
+  ${Config.BaseUrl}/${data.id}/stage/complete || echo "stage-complete callback failed"
 
 systemctl disable network-migration.service 2>/dev/null || true
 rm -f /etc/systemd/system/network-migration.service
@@ -1197,8 +1196,7 @@ $NETWORK_CONFIG
 sleep 5
 
 curl -4 -sS -f --max-time 10 --retry 8 --retry-delay 2 --retry-all-errors -X POST \
-  ${Config.BaseUrl}/${data.id}/stage/complete \
-  || echo "stage-complete callback failed"
+  ${Config.BaseUrl}/${data.id}/stage/complete || echo "stage-complete callback failed"
 
 systemctl disable network-migration.service 2>/dev/null || true
 rm -f /etc/systemd/system/network-migration.service
