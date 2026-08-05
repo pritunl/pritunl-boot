@@ -505,7 +505,8 @@ nmcli connection up ${vlanIface6}
 
 export function generateKickstart(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
-	const passwd = Utils.generateId(32)
+	const passwd = data.root_password || Utils.generateId(32)
+	const rootLock = data.root_password ? "" : "passwd -d root\npasswd -l root\n"
 
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
 	let publicMacFunc = ""
@@ -810,9 +811,7 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-passwd -d root
-passwd -l root
-passwd -d cloud
+${rootLock}passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
 chown cloud:cloud /home/cloud/.ssh
@@ -847,7 +846,8 @@ curl -X POST ${Config.BaseUrl}/${data.id}/stage/reboot || true
 export function generateKickstartLive(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
-	const passwd = Utils.generateId(32)
+	const passwd = data.root_password || Utils.generateId(32)
+	const rootLock = data.root_password ? "" : "passwd -d root\npasswd -l root\n"
 
 	return `text
 reboot
@@ -1213,9 +1213,7 @@ KbdInteractiveAuthentication no
 EOF
 
 useradd -G adm,video,wheel,systemd-journal cloud || true
-passwd -d root
-passwd -l root
-passwd -d cloud
+${rootLock}passwd -d cloud
 passwd -l cloud
 mkdir -p /home/cloud/.ssh
 chown cloud:cloud /home/cloud/.ssh
