@@ -24,7 +24,7 @@ export interface Data {
 	mode: "live" | "static"
 	secure: boolean
 	digest: boolean
-	provider: "none" | "latitude" | "vultr"
+	provider: "none" | "phoenix" | "latitude" | "vultr"
 	network_mode: "static" | "dhcp"
 	bonded_network: boolean
 	public_ip: string
