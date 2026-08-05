@@ -792,12 +792,14 @@ ${networkScript}
 
 sleep 5
 
-curl -X POST ${Config.BaseUrl}/${data.id}/stage/complete || true
+curl -4 -sS -f --max-time 10 --retry 8 --retry-delay 2 --retry-all-errors -X POST \
+  ${Config.BaseUrl}/${data.id}/stage/complete \
+  || echo "stage-complete callback failed"
 
 systemctl disable network-migration.service 2>/dev/null || true
-systemctl daemon-reload 2>/dev/null || true
 rm -f /etc/systemd/system/network-migration.service
 rm -f /usr/local/bin/network-migration.sh
+systemctl daemon-reload 2>/dev/null || true
 EOF
 
 chmod +x /usr/local/bin/network-migration.sh
@@ -1194,12 +1196,14 @@ $NETWORK_CONFIG
 
 sleep 5
 
-curl -X POST ${Config.BaseUrl}/${data.id}/stage/complete || true
+curl -4 -sS -f --max-time 10 --retry 8 --retry-delay 2 --retry-all-errors -X POST \
+  ${Config.BaseUrl}/${data.id}/stage/complete \
+  || echo "stage-complete callback failed"
 
 systemctl disable network-migration.service 2>/dev/null || true
-systemctl daemon-reload 2>/dev/null || true
 rm -f /etc/systemd/system/network-migration.service
 rm -f /usr/local/bin/network-migration.sh
+systemctl daemon-reload 2>/dev/null || true
 EOF
 
 chmod +x /usr/local/bin/network-migration.sh
