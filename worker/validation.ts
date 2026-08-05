@@ -248,6 +248,25 @@ export function validateConfiguration(
 		throw new Types.ValidationError("Invalid RAID configuration")
 	}
 
+	if (data.root_password) {
+		if (typeof data.root_password !== "string") {
+			throw new Types.ValidationError("Invalid root password format")
+		}
+
+		if (data.root_password.length > 128) {
+			throw new Types.ValidationError(
+				"Root password too long, maximum 128 characters allowed")
+		}
+
+		if (!isValidPassword(data.root_password)) {
+			throw new Types.ValidationError(
+				"Invalid root password, cannot contain spaces, quotes, " +
+				"backslashes, backticks or number signs")
+		}
+	} else {
+		data.root_password = ""
+	}
+
 	if (data.ssh_keys) {
 		if (data.ssh_keys.length > 5000) {
 			throw new Types.ValidationError(
@@ -300,6 +319,7 @@ export function validateConfiguration(
 		interface: data.interface,
 		root_size: data.root_size,
 		raid: data.raid,
+		root_password: data.root_password,
 		ssh_keys: data.ssh_keys,
 		disks: data.disks,
 		interfaces: data.interfaces,
@@ -440,6 +460,11 @@ export function isValidInterfaceName(name: string): boolean {
 	}
 	const validCharsRegex = /^[a-z0-9]+$/
 	return validCharsRegex.test(name)
+}
+
+export function isValidPassword(password: string): boolean {
+	const passwordRegex = /^[A-Za-z0-9!@$%^&*()_\-+=[\]{}:;,.<>/?~|]+$/
+	return passwordRegex.test(password)
 }
 
 export function isValidMAC(mac: string): boolean {
