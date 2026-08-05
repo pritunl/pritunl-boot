@@ -42,6 +42,7 @@ function Register() {
 	const [bondedNetwork, setBondedNetwork] = useState(false)
 	const [rootSize, setRootSize] = useState("")
 	const [raidConfig, setRaidConfig] = useState("-1")
+	const [rootPassword, setRootPassword] = useState("")
 	const [sshKeys, setSshKeys] = useState("")
 	const [longUrlKey, setLongUrlKey] = useState(false)
 	const [ipxeHash, setIpxeHash] = useState(false)
@@ -333,6 +334,21 @@ function Register() {
 					</>)}
 
 					<Flex direction="column" gap="1">
+						<Text as="label" htmlFor="root-password">
+							Root Password
+							<Text color="gray"> (Leave Blank to Disable Root Login)</Text>
+						</Text>
+						<TextField.Root
+							id="root-password"
+							autoComplete="new-password"
+							placeholder="Root Disabled"
+							spellCheck={false}
+							value={rootPassword}
+							onChange={(e) => setRootPassword(e.target.value)}
+						/>
+					</Flex>
+
+					<Flex direction="column" gap="1">
 						<Text as="label" htmlFor="ssh-keys">
 							SSH Keys
 						</Text>
@@ -381,6 +397,7 @@ function Register() {
 									private_network_mode: "none",
 									root_size: rootSize,
 									raid: parseInt(raidConfig, 10),
+									root_password: rootPassword,
 									ssh_keys: sshKeys,
 									long_url_key: longUrlKey,
 								}
