@@ -34,6 +34,7 @@ export interface Configuration {
 	interface?: string
 	root_size: string
 	raid: number
+	root_password: string
 	ssh_keys: string
 	disks?: string[]
 	long_url_key: boolean
