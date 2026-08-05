@@ -142,6 +142,8 @@ function Register() {
 								setProvider(val)
 								if (val === "phoenix") {
 									setNetworkMode("static")
+									setVlan("")
+									setInterfaceName("")
 								}
 							}}
 						>
