@@ -340,6 +340,7 @@ function Register() {
 						</Text>
 						<TextField.Root
 							id="root-password"
+							type="password"
 							autoComplete="new-password"
 							placeholder="Root Disabled"
 							spellCheck={false}
