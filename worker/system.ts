@@ -167,13 +167,15 @@ sleep 1`
 	if (data.bonded_network && data.interfaces && data.interfaces.length >= 2) {
 		rootIface = "bond0"
 		let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
-		if (data.mtu) {
-			bondOpts += `,mtu=${data.mtu}`
-		}
 
 		nmConns.add(rootIface)
 		conf += `
 nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
+
+		if (data.mtu) {
+			conf += `
+nmcli connection modify ${rootIface} 802-3-ethernet.mtu ${data.mtu}`
+		}
 		data.interfaces.forEach((_iface: string, index: number) => {
 			nmConns.add(`${rootIface}-slave${index}`)
 			conf += `
@@ -345,12 +347,14 @@ function generateKickstartPrivateNetwork(data: Types.Configuration,
 		} else {
 			rootIface = "bond1"
 			let bondOpts = "mode=802.3ad,lacp_rate=fast,miimon=100,xmit_hash_policy=layer3+4"
-			if (data.mtu) {
-				bondOpts += `,mtu=${data.mtu}`
-			}
 
 			conf += `
 nmcli connection add type bond con-name ${rootIface} ifname ${rootIface} bond.options ${bondOpts}`
+
+			if (data.private_mtu) {
+				conf += `
+nmcli connection modify ${rootIface} 802-3-ethernet.mtu ${data.private_mtu}`
+			}
 			data.private_interfaces.forEach((_iface: string, index: number) => {
 				nmConns.add(`${rootIface}-slave${index}`)
 				conf += `
