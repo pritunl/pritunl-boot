@@ -77,7 +77,7 @@ function getKernelNetwork(data: Types.Configuration): string {
 }
 
 function getKickstartAddon(data: Types.Configuration): string {
-	if (data.distro === "fedora") {
+	if (data.distro.startsWith("fedora")) {
 		return ""
 	}
 
@@ -88,7 +88,7 @@ function getKickstartAddon(data: Types.Configuration): string {
 }
 
 function getKickstartInstall(data: Types.Configuration): string {
-	if (data.distro === "fedora") {
+	if (data.distro.startsWith("fedora")) {
 		return `%packages
 @^server-product-environment
 %end
