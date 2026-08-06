@@ -6,7 +6,7 @@ export interface Env {
 
 export interface Configuration {
 	id: string
-	distro: "almalinux10" | "oraclelinux10" | "rockylinux10" | "fedora"
+	distro: "almalinux10" | "oraclelinux10" | "rockylinux10" | "fedora43" | "fedora44"
 	secure: boolean
 	digest: boolean
 	mode: "live" | "static"
