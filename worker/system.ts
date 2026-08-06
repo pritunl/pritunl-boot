@@ -509,7 +509,9 @@ nmcli connection up ${vlanIface6}
 
 export function generateKickstart(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
-	const passwd = data.root_password || Utils.generateId(32)
+	const rootPw = data.root_password ?
+		`rootpw --iscrypted ${data.root_password}` :
+		`rootpw --plaintext ${Utils.generateId(32)}`
 	const rootLock = data.root_password ? "" : "passwd -d root\npasswd -l root\n"
 
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
@@ -555,7 +557,7 @@ firstboot --enable
 
 timezone Etc/UTC --utc
 
-rootpw --plaintext ${passwd}
+${rootPw}
 
 %pre
 #!/bin/bash
@@ -851,7 +853,9 @@ curl -X POST ${Config.BaseUrl}/${data.id}/stage/reboot || true
 export function generateKickstartLive(data: Types.Configuration): string {
 	const distro = Config.Distros[data.distro]
 	const sshKeys = Utils.decodeBase64(data.ssh_keys)
-	const passwd = data.root_password || Utils.generateId(32)
+	const rootPw = data.root_password ?
+		`rootpw --iscrypted ${data.root_password}` :
+		`rootpw --plaintext ${Utils.generateId(32)}`
 	const rootLock = data.root_password ? "" : "passwd -d root\npasswd -l root\n"
 
 	return `text
@@ -870,7 +874,7 @@ firstboot --enable
 
 timezone Etc/UTC --utc
 
-rootpw --plaintext ${passwd}
+${rootPw}
 
 %pre
 #!/bin/bash
