@@ -5,7 +5,7 @@ export function validateConfiguration(
 	data: Types.Configuration, install: boolean = false): Types.Configuration {
 
 	if (!data.distro || !["almalinux10", "oraclelinux10",
-			"rockylinux10", "fedora"].includes(data.distro)) {
+			"rockylinux10", "fedora43", "fedora44"].includes(data.distro)) {
 		throw new Types.ValidationError("Invalid distro")
 	}
 
@@ -26,7 +26,7 @@ export function validateConfiguration(
 	}
 
 	if (!data.provider ||
-		!["none", "latitude", "vultr"].includes(data.provider)) {
+		!["none", "phoenix", "latitude", "vultr"].includes(data.provider)) {
 
 		throw new Types.ValidationError("Invalid provider")
 	}
