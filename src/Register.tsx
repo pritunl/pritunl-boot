@@ -96,7 +96,13 @@ function Register() {
 										<span>Rocky Linux 10</span>
 									</Flex>
 								</Select.Item>
-								<Select.Item value="fedora">
+								<Select.Item value="fedora43">
+									<Flex as="span" align="center" gap="2">
+										<span style={css.logo} className="fedora-logo"/>
+										<span>Fedora Server 43</span>
+									</Flex>
+								</Select.Item>
+								<Select.Item value="fedora44">
 									<Flex as="span" align="center" gap="2">
 										<span style={css.logo} className="fedora-logo"/>
 										<span>Fedora Server 44</span>
