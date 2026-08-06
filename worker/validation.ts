@@ -249,19 +249,11 @@ export function validateConfiguration(
 	}
 
 	if (data.root_password) {
-		if (typeof data.root_password !== "string") {
-			throw new Types.ValidationError("Invalid root password format")
-		}
+		if (typeof data.root_password !== "string" ||
+				!isValidPasswordHash(data.root_password)) {
 
-		if (data.root_password.length > 128) {
 			throw new Types.ValidationError(
-				"Root password too long, maximum 128 characters allowed")
-		}
-
-		if (!isValidPassword(data.root_password)) {
-			throw new Types.ValidationError(
-				"Invalid root password, cannot contain spaces, quotes, " +
-				"backslashes, backticks or number signs")
+				"Invalid root password hash, must be sha512-crypt format")
 		}
 	} else {
 		data.root_password = ""
@@ -462,9 +454,9 @@ export function isValidInterfaceName(name: string): boolean {
 	return validCharsRegex.test(name)
 }
 
-export function isValidPassword(password: string): boolean {
-	const passwordRegex = /^[A-Za-z0-9!@$%^&*()_\-+=[\]{}:;,.<>/?~|]+$/
-	return passwordRegex.test(password)
+export function isValidPasswordHash(hash: string): boolean {
+	const hashRegex = /^\$6\$[A-Za-z0-9./]{8,16}\$[A-Za-z0-9./]{86}$/
+	return hashRegex.test(hash)
 }
 
 export function isValidMAC(mac: string): boolean {
