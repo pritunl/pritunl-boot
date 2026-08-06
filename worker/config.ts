@@ -43,7 +43,16 @@ repo --name="AppStream" --baseurl="https://dl.rockylinux.org/pub/rocky/10/AppStr
 		initrd_url: "https://dl.rockylinux.org/pub/rocky/10/BaseOS/x86_64/os/images/pxeboot/initrd.img",
 		initrd_hash: "d29f598e370b097be550310f24462ffcd5645466da3b117124839c43d8c8a5f7",
 	},
-	"fedora": {
+	"fedora43": {
+		repo_url: "https://iad.mirror.rackspace.com/fedora/releases/43/Server/x86_64/os/",
+		repo_conf: `url --url="https://iad.mirror.rackspace.com/fedora/releases/43/Server/x86_64/os/"
+repo --name="updates" --baseurl="https://iad.mirror.rackspace.com/fedora/updates/43/Everything/x86_64/"`,
+		kernel_url: "https://iad.mirror.rackspace.com/fedora/releases/43/Server/x86_64/os/images/pxeboot/vmlinuz",
+		kernel_hash: "68b0566224393befb04dd2d0a8322481dbd1c38514096f6b9d96445a262c9a1f",
+		initrd_url: "https://iad.mirror.rackspace.com/fedora/releases/43/Server/x86_64/os/images/pxeboot/initrd.img",
+		initrd_hash: "0647fcdab4e5579f446e02e70ba5ced8d57e96ce78c0d7879d3d82fedff9afe0",
+	},
+	"fedora44": {
 		repo_url: "https://iad.mirror.rackspace.com/fedora/releases/44/Server/x86_64/os/",
 		repo_conf: `url --url="https://iad.mirror.rackspace.com/fedora/releases/44/Server/x86_64/os/"
 repo --name="updates" --baseurl="https://iad.mirror.rackspace.com/fedora/updates/44/Everything/x86_64/"`,
