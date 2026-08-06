@@ -141,6 +141,7 @@ function Register() {
 							onValueChange={(val) => {
 								setProvider(val)
 								if (val === "phoenix") {
+									setSecure(true)
 									setNetworkMode("static")
 									setVlan("")
 									setInterfaceName("")
