@@ -10,7 +10,7 @@ export interface Configuration {
 	secure: boolean
 	digest: boolean
 	mode: "live" | "static"
-	provider: "none" | "latitude"| "vultr"
+	provider: "none" | "phoenix" | "latitude" | "vultr"
 	network_mode: "static" | "dhcp"
 	bonded_network: boolean
 	public_ip: string
