@@ -2,6 +2,7 @@ import { useState } from "react"
 import logo from "./assets/logo.png"
 import * as Router from "./router"
 import * as Config from "../worker/config"
+import * as Utils from "../worker/utils"
 import {
 	Box, Container,
 	Heading, Flex,
@@ -393,8 +394,13 @@ function Register() {
 					<Flex direction="column" pt="3">
 						<Button
 							disabled={disabled}
-							onClick={() => {
+							onClick={async () => {
 								setDisabled(true)
+
+								let rootPasswordHash = ""
+								if (rootPassword) {
+									rootPasswordHash = await Utils.sha512Crypt(rootPassword)
+								}
 
 								const payload = {
 									distro: distro,
@@ -414,7 +420,7 @@ function Register() {
 									private_network_mode: "none",
 									root_size: rootSize,
 									raid: parseInt(raidConfig, 10),
-									root_password: rootPassword,
+									root_password: rootPasswordHash,
 									ssh_keys: sshKeys,
 									long_url_key: longUrlKey,
 								}
